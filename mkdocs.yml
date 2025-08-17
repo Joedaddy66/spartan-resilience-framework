@@ -1,0 +1,6 @@
+site_name: Spartan Resilience Framework
+theme:
+  name: material
+nav:
+  - Home: index.md
+docs_dir: docs
