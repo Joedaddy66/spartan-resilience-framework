@@ -2,13 +2,8 @@ site_name: Spartan Resilience Framework
 theme:
   name: material
 nav:
-  - Home: index.md
-  - The Eternal Accord: accord.md
-  - Resilience Laws: laws.md
-  - Roadmap: roadmap.md
-docs_dir: docs
-
-  - Tests:
-      - Dissenting Sentinel v2: tests/dissenting_sentinel_v2.md
-
-      - Index: tests/index.md
+  - 'Home': index.md
+  - 'About': about.md
+  - 'Tests':
+    - 'Index': tests/index.md
+    - 'Dissenting Sentinel v2': tests/dissenting_sentinel_v2.md
