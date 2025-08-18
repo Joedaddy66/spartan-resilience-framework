@@ -10,3 +10,5 @@ docs_dir: docs
 
   - Tests:
       - Dissenting Sentinel v2: tests/dissenting_sentinel_v2.md
+
+      - Index: tests/index.md
