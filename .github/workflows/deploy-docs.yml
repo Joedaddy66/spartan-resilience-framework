@@ -1,0 +1,21 @@
+name: Deploy Docs
+on:
+  push:
+    branches: [ "main" ]
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install mkdocs mkdocs-material
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Build & publish to gh-pages
+        run: mkdocs gh-deploy --force --message "Docs deploy: \"
