@@ -1,5 +1,4 @@
-﻿@"
-site_name: Spartan Resilience Framework
+﻿site_name: Spartan Resilience Framework
 theme:
   name: material
 docs_dir: docs
@@ -9,8 +8,3 @@ nav:
   - Tests:
       - Index: tests/index.md
       - Dissenting Sentinel v2: tests/dissenting_sentinel_v2.md
-"@ | Set-Content -NoNewline mkdocs.yml
-
-git add mkdocs.yml
-git commit -m "Fix mkdocs.yml (valid YAML nav)"
-git push
