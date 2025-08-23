@@ -4,7 +4,10 @@ theme:
 docs_dir: docs
 nav:
   - Home: index.md
-  - AI Training: training.md
+  - Accord: accord.md
+  - Laws: laws.md
+  - Roadmap: roadmap.md
+  - Training: training.md
   - Tests:
-      - Index: tests/index.md
-      - Dissenting Sentinel v2: tests/dissenting_sentinel_v2.md
+      - Overview: tests/index.md
+      - Dissenting Sentinel: tests/dissenting_sentinel_v2.md
