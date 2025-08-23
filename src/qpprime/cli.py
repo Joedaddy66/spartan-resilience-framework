@@ -29,7 +29,7 @@ def cmd_factor(args):
 
 def cmd_table(args):
     rows = summarize_p_list(args.p)
-    headers = ["p", "p_mod_4", "forced_by_5", "Qp_mod_5", "Qp_digits", "Qp_probably_prime"]
+    headers = ["p", "p_mod_4", "forced_by_5", "killed_by_7", "killed_by_11", "killers", "Qp_mod_5", "Qp_digits", "Qp_probably_prime"]
     def tick(b): return "✅" if b else "❌"
     # header
     if args.markdown:
@@ -40,8 +40,8 @@ def cmd_table(args):
     # rows
     for r in rows:
         r2 = r.copy()
-        r2["forced_by_5"] = tick(r["forced_by_5"])
-        r2["Qp_probably_prime"] = tick(r["Qp_probably_prime"])
+        for k in ["forced_by_5","killed_by_7","killed_by_11","Qp_probably_prime"]:
+            r2[k] = tick(r[k])
         cols = [str(r2[h]) for h in headers]
         if args.markdown:
             print("| " + " | ".join(cols) + " |")

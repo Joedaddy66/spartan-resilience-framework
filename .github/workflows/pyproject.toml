@@ -1,0 +1,41 @@
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qpprime"
+version = "0.1.1"
+description = "Quadratic Polynomial Prime Analysis Toolkit"
+authors = [
+    { name = "Joe Purvis" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+authors = [{ name = "Joe Purvis" }]
+keywords = ["number theory", "mersenne", "primality", "math"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Operating System :: OS Independent"
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Joedaddy66/spartan-resilience-framework"
+Repository = "https://github.com/Joedaddy66/spartan-resilience-framework"
+Issues = "https://github.com/Joedaddy66/spartan-resilience-framework/issues"
+
+[project.scripts]
+qpprime = "qpprime.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["qpprime*"]

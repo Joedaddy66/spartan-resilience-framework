@@ -1,9 +1,10 @@
-﻿site_name: Spartan Resilience Framework
+site_name: Spartan Resilience Framework
 site_url: https://joedaddy66.github.io/spartan-resilience-framework/
 theme:
   name: material
-nav:
-  - Home: index.md
-  - Report:
-      - Qp Analysis: report/Qp_mod5_summary.md
-docs_dir: docs
+ param($m)
+        $block = $m.Groups[1].Value
+        if ($block -notmatch 'CHANGELOG\.md') {
+          "nav:" + $block + "`n  - Changelog: CHANGELOG.md`n"
+        } else { $m.Value }
+      

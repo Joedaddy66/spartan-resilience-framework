@@ -1,5 +1,5 @@
 import random, math
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 def mersenne(p: int) -> int:
     return (1 << p) - 1
@@ -115,14 +115,66 @@ def factor_semismooth(n: int, max_steps: int = 6) -> Dict[int,int]:
             stack.append(b)
     return factors
 
+# ---------- Modular killer rules ----------
+def _order_of_two_mod(m: int) -> int:
+    """Multiplicative order of 2 mod m (assumes gcd(2,m)=1)."""
+    if math.gcd(2, m) != 1:
+        return 1
+    x, k = 1, 0
+    while True:
+        k += 1
+        x = (x * 2) % m
+        if x == 1:
+            return k
+
+def Qp_mod(p: int, m: int) -> int:
+    """Compute Q_p modulo m without forming Q_p."""
+    t = pow(2, p, m)  # 2^p mod m
+    Mp = (t - 1) % m  # M_p = 2^p - 1
+    return (4 * ((Mp - 2) % m) * ((Mp - 2) % m) + 1) % m
+
+def killer_residues(m: int) -> Tuple[int, List[int]]:
+    """
+    Return (period, residues) where Q_p ≡ 0 (mod m) iff p ≡ r (mod period) for some r in residues.
+    Only valid for odd primes m (gcd(2,m)=1).
+    """
+    per = _order_of_two_mod(m)
+    res = []
+    for r in range(per):
+        if Qp_mod(r, m) == 0:
+            res.append(r)
+    return per, res
+
+def killed_by_m(p: int, m: int) -> bool:
+    """Use residue classes to decide divisibility by m without big ints."""
+    per, res = killer_residues(m)
+    return (p % per) in res
+
+def killers_for_p(p: int, primes: List[int] = [5,7,11]) -> List[int]:
+    ks = []
+    for m in primes:
+        # Fast path: preserve exact known mod-5 law
+        if m == 5:
+            if forced_composite_by_5(p):
+                ks.append(5)
+            continue
+        per, res = killer_residues(m)
+        if (p % per) in res:
+            ks.append(m)
+    return ks
+
 def summarize_p_list(p_list: List[int]):
     rows = []
     for p in p_list:
         Q = Q_p(p)
+        ks = killers_for_p(p, [5,7,11])
         rows.append({
             "p": p,
             "p_mod_4": p_mod4_class(p),
             "forced_by_5": forced_composite_by_5(p),
+            "killed_by_7": 7 in ks,
+            "killed_by_11": 11 in ks,
+            "killers": ",".join(str(k) for k in ks) if ks else "-",
             "Qp_mod_5": Q % 5,
             "Qp_digits": len(str(Q)),
             "Qp_probably_prime": is_probable_prime(Q, k=16),

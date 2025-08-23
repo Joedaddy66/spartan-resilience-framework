@@ -1,7 +1,8 @@
-ï»¿# Rollout Roadmap (2025-Ready, Human-Led)
-1. **Advisor-only AI** â€” AI models simulate and warn; humans decide.
-2. **Local pilot** â€” community charter + sentinel dashboards; measure cohesion/entropy early.
-3. **Public docs + feedback** â€” iterate openly; publish results and protocols.
-4. **Tooling** â€” scanners/simulators in \src/\; outreach via slides in \slides/\.
+# Roadmap
 
+The Spartan Resilience Framework is evolving through phases:
 
+- **2025 Q3** – Foundation (philosophy, laws, and protocols)
+- **2025 Q4** – Sentinel AI prototypes
+- **2026 Q1** – Hybrid Oversight System (Rose, Solace, Omega)
+- **2026+** – Global resilience deployment

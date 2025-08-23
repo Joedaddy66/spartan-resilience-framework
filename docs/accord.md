@@ -1,8 +1,10 @@
-ï»¿# The Eternal Accord
-**Core principle:** Power is cyclical; all governance returns to the governed.
+# The Eternal Accord
 
-**Mirror Doctrine:** AI reflects human values; it never originates authority.
-**Sovereignty Return:** Regular, enforced return of power to the people.
-**Trust Architecture:** Layered oversight (structure, memory, archives) prevents corruption spread.
+The Accord represents the **foundational agreement** for resilience.
 
+It establishes shared principles across technology, governance, and culture:
 
+1. **Truth as a Web** – Truth is plural and multi-faceted.
+2. **Resilience First** – Systems must endure disruption.
+3. **Human Dignity** – AI must preserve autonomy and rights.
+4. **Shared Stewardship** – Responsibility belongs to many, not few.

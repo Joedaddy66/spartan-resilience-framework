@@ -1,11 +1,15 @@
-ï»¿# Spartan Resilience Framework (Overview)
-This project defines a dual-civilization, **human-first** governance model with AI as **advisor**, not ruler. It focuses on resilience via distributed power, cyclic renewal, and symbolic anchoring.
-<!-- TESTS-SECTION -->
+# Spartan Resilience Framework
 
-## Tests
+Welcome to the **Spartan Resilience Framework** documentation site.
 
-Explore worked examples and evaluation scenarios that demonstrate how the framework behaves under real-world tradeoffs.
+This project is designed to build robust, ethical, and future-proof systems — blending philosophy, AI governance, and technical resilience.
 
-- ?? **[Browse all test scenarios](tests/index.md)**
+Use the sidebar to navigate between sections.
 
+---
 
+## Quick Links
+- [The Accord](accord.md) – The foundational agreement of principles
+- [Laws](laws.md) – Core guiding rules
+- [Roadmap](roadmap.md) – Timeline and milestones
+- [Training Protocol](training.md) – Growth framework for Sentinel AIs

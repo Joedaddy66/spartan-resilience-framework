@@ -1,8 +1,8 @@
-ï»¿# Resilience Laws & Equations
-- **Civilization Collapse Equation** â€” entropy as a function of corruption, cohesion, and faith.
-- **Bond Strength / BCFB** â€” complementary factor resonance; intuition bridge between math and meaning.
-- **PFE & Aâ€“M Fingerprint** â€” measuring factoring difficulty and fingerprinting semiprimes for safety triage.
+# The Laws of Spartan Resilience
 
-> Status: exploratory ? seeking validation and calibration before claims beyond education/audits.
+These laws serve as the **axioms** of the framework:
 
-
+1. **Law of Integrity** – No system may undermine its core purpose.
+2. **Law of Transparency** – Black boxes are liabilities.
+3. **Law of Balance** – No domain of knowledge dominates unchallenged.
+4. **Law of Evolution** – Adaptation is required for survival.
