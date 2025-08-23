@@ -3,10 +3,32 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spartan-qpprime"
+name = "qpprime"
 version = "0.1.0"
-description = "QPPrime: Mersenne Q_p analysis tools"
+description = "Q_p = 4(M_p - 2)^2 + 1 analysis tools (CLI + library)"
+readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.9"
+authors = [{ name = "Joe Purvis" }]
+keywords = ["number theory", "mersenne", "primality", "math"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Operating System :: OS Independent"
+]
+
+# No required runtime deps right now; add here if needed:
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Joedaddy66/spartan-resilience-framework"
+Repository = "https://github.com/Joedaddy66/spartan-resilience-framework"
+Issues = "https://github.com/Joedaddy66/spartan-resilience-framework/issues"
+
+[project.scripts]
+qpprime = "qpprime.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

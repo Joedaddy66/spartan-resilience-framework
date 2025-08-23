@@ -1,4 +1,7 @@
-﻿import csv, os, datetime, sys, pathlib
+﻿$ErrorActionPreference = 'Stop'
+
+@'
+import csv, os, datetime, sys, pathlib
 import matplotlib
 matplotlib.use("Agg")  # headless for CI
 import matplotlib.pyplot as plt
@@ -29,6 +32,10 @@ def write_md_table(path, rows):
         f.write("   ![Qp Digits Plot](qp_digits_plot.png)\n\n")
         f.write("2. Survivors vs. killed-by-5 (different markers)\n\n")
         f.write("   ![Survivors vs Killed-by-5](qp_digits_survivors.png)\n\n")
+        f.write("3. Log-scale digits vs. p (useful for larger p)\n\n")
+        f.write("   ![Log-scale Digits](qp_digits_log.png)\n\n")
+        f.write("4. Grouped by p mod 4 (different markers)\n\n")
+        f.write("   ![Grouped by p mod 4](qp_by_mod4.png)\n\n")
         f.write("## Detailed Analysis Table\n\n")
         f.write("| " + " | ".join(headers) + " |\n")
         f.write("|" + "|".join(["---"]*len(headers)) + "|\n")
@@ -59,11 +66,8 @@ def plot_digits_overall(rows, path_png):
     plt.close()
 
 def plot_survivors_vs_killed(rows, path_png):
-    # Split rows into killed-by-5 and survivors
-    killed = [(r['p'], r['Qp_digits']) if r['forced_by_5'] else None for r in rows]
-    surv   = [(r['p'], r['Qp_digits']) if not r['forced_by_5'] else None for r in rows]
-    killed = [x for x in killed if x]
-    surv   = [x for x in surv if x]
+    killed = [(r['p'], r['Qp_digits']) for r in rows if r['forced_by_5']]
+    surv   = [(r['p'], r['Qp_digits']) for r in rows if not r['forced_by_5']]
 
     plt.figure(figsize=(10, 6))
     if killed:
@@ -86,6 +90,47 @@ def plot_survivors_vs_killed(rows, path_png):
     plt.savefig(path_png, dpi=150)
     plt.close()
 
+def plot_digits_logscale(rows, path_png):
+    p_values = [r['p'] for r in rows]
+    q_digits = [r['Qp_digits'] for r in rows]
+    plt.figure(figsize=(10, 6))
+    plt.scatter(p_values, q_digits, s=80, alpha=0.85)
+    for i, p in enumerate(p_values):
+        plt.annotate(f"p={p}", (p_values[i], q_digits[i]), textcoords="offset points", xytext=(0,10), ha="center")
+    plt.yscale("log")
+    plt.title("Digits in $Q_p$ vs. $p$ (log-scale y)")
+    plt.xlabel("Mersenne Exponent ($p$)")
+    plt.ylabel("Number of Digits in $Q_p$ (log scale)")
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
+    plt.tight_layout()
+    plt.savefig(path_png, dpi=150)
+    plt.close()
+
+def plot_by_p_mod4(rows, path_png):
+    buckets = {0: [], 1: [], 2: [], 3: []}
+    for r in rows:
+        buckets[r['p_mod_4']].append((r['p'], r['Qp_digits']))
+
+    markers = {0: 's', 1: 'o', 2: 'x', 3: '^'}  # different shapes, no colors set
+    plt.figure(figsize=(10, 6))
+    for cls in [0,1,2,3]:
+        pts = buckets[cls]
+        if not pts:
+            continue
+        xp, yd = zip(*pts)
+        plt.scatter(xp, yd, marker=markers[cls], s=80, alpha=0.85, label=f"p ≡ {cls} (mod 4)")
+        for i in range(len(xp)):
+            plt.annotate(f"p={xp[i]}", (xp[i], yd[i]), textcoords="offset points", xytext=(0,10), ha="center")
+
+    plt.title("$Q_p$ Digits vs. $p$ grouped by $p \\bmod 4$")
+    plt.xlabel("Mersenne Exponent ($p$)")
+    plt.ylabel("Number of Digits in $Q_p$")
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path_png, dpi=150)
+    plt.close()
+
 def main():
     out_dir = pathlib.Path("docs/report")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -93,10 +138,16 @@ def main():
 
     write_csv(str(out_dir / "Qp_summary.csv"), rows)
     write_md_table(str(out_dir / "Qp_mod5_summary.md"), rows)
+
     plot_digits_overall(rows, str(out_dir / "qp_digits_plot.png"))
     plot_survivors_vs_killed(rows, str(out_dir / "qp_digits_survivors.png"))
+    plot_digits_logscale(rows, str(out_dir / "qp_digits_log.png"))
+    plot_by_p_mod4(rows, str(out_dir / "qp_by_mod4.png"))
 
-    print("Wrote docs/report/Qp_mod5_summary.md, Qp_summary.csv, qp_digits_plot.png, qp_digits_survivors.png")
+    print("Wrote docs/report/* including two new charts (log-scale, mod-4 grouping).")
 
 if __name__ == "__main__":
     main()
+'@ | Set-Content -Encoding UTF8 .\scripts\run_analysis.py
+
+Write-Host "✅ Patched run_analysis.py with log-scale and p mod 4 grouped charts."
