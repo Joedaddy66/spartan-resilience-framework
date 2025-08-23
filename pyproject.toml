@@ -1,14 +1,18 @@
-﻿[build-system]
+[build-system]
 requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "qpprime"
-version = "0.1.0"
-description = "Q_p = 4(M_p - 2)^2 + 1 analysis tools (CLI + library)"
+version = "0.1.2"
+description = "Quadratic Polynomial Prime Analysis Toolkit"
+authors = [
+    { name = "Joe Purvis" }
+]
 readme = "README.md"
-license = { file = "LICENSE" }
 requires-python = ">=3.9"
+dependencies = []
+
 authors = [{ name = "Joe Purvis" }]
 keywords = ["number theory", "mersenne", "primality", "math"]
 classifiers = [
@@ -18,8 +22,6 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "Operating System :: OS Independent"
 ]
-
-# No required runtime deps right now; add here if needed:
 dependencies = []
 
 [project.urls]
