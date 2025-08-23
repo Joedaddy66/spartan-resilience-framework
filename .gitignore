@@ -1,6 +1,11 @@
+# Python
 __pycache__/
-*.pyc
-node_modules/
+*.py[cod]
+*.egg-info/
+
+# MkDocs
+/site/
+
+# OS
 .DS_Store
 Thumbs.db
-site/

@@ -1,13 +1,17 @@
-﻿site_name: Spartan Resilience Framework
+site_name: Spartan Resilience Framework
+site_url: https://joedaddy66.github.io/spartan-resilience-framework/
+repo_url: https://github.com/Joedaddy66/spartan-resilience-framework
 theme:
   name: material
-docs_dir: docs
+  features:
+    - navigation.expand
+    - navigation.sections
+    - toc.integrate
+    - content.code.copy
+
 nav:
   - Home: index.md
   - Accord: accord.md
   - Laws: laws.md
   - Roadmap: roadmap.md
   - Training: training.md
-  - Tests:
-      - Overview: tests/index.md
-      - Dissenting Sentinel: tests/dissenting_sentinel_v2.md
