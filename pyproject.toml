@@ -6,14 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "qpprime"
 version = "0.1.2"
 description = "Quadratic Polynomial Prime Analysis Toolkit"
-authors = [
-    { name = "Joe Purvis" }
-]
+authors = [{ name = "Joe Purvis" }]
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
-
-authors = [{ name = "Joe Purvis" }]
 keywords = ["number theory", "mersenne", "primality", "math"]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -22,7 +18,6 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "Operating System :: OS Independent"
 ]
-dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/Joedaddy66/spartan-resilience-framework"
