@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # Enable version updates for Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Joedaddy66"
+    commit-message:
+      prefix: "security"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "security"
+    
+  # GitHub Actions dependency updates  
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday" 
+      time: "02:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Joedaddy66"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"

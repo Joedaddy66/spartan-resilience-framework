@@ -22,6 +22,17 @@ jobs:
           python --version
           pip show mkdocs mkdocs-material || true
           mkdocs --version
+      - name: Run tests
+        run: |
+          pip install pytest
+          python -m pytest tests/ -v
+          
+      - name: Basic security check
+        run: |
+          echo "Checking for obvious security issues..."
+          pip install safety
+          safety check --short-report || echo "Warning: Security issues found (non-blocking in CI)"
+          
       - name: MkDocs build
         run: mkdocs build
 
