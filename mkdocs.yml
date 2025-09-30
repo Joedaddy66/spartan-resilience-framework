@@ -2,16 +2,3 @@ site_name: Spartan Resilience Framework
 site_url: https://joedaddy66.github.io/spartan-resilience-framework/
 theme:
   name: material
- param($m)
-        $block = $m.Groups[1].Value
-        if ($block -notmatch 'CHANGELOG\.md') {
-          "nav:" + $block + "`n  - Changelog: CHANGELOG.md`n"
-        } else { $m.Value }
-      
-$mk = Get-Content -Raw .\mkdocs.yml
-if ($mk -notmatch 'Mod-5 Law: report/mod5-law\.md') {
-  $mk = $mk -replace '(Report:\s*(?:.|\n)*?)(\n\s*-\s*\w|\Z)', "`${1}`n      - Mod-5 Law: report/mod5-law.md`n`$2"
-  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-  [System.IO.File]::WriteAllText((Resolve-Path "mkdocs.yml"), $mk, $utf8NoBom)
-  Write-Host "✅ Added Mod-5 Law to nav"
-} else { Write-Host "ℹ️ Mod-5 Law already present in nav" }
