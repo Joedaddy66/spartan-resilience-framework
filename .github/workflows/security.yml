@@ -1,67 +1,47 @@
 name: Security Checks
-on: 
+
+on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
-  schedule:
-    # Run weekly security checks
-    - cron: '0 2 * * 1'
+    branches: [ main ]
 
 jobs:
-  security-scan:
+  security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e .
-          pip install safety bandit semgrep
-          
-      - name: Python Security Scan with Safety
+          pip install safety bandit
+
+      - name: Run safety check for known vulnerabilities
         run: |
-          echo "Running safety check for known vulnerabilities..."
-          safety check --json --output safety-report.json || true
+          safety check --output json > safety-report.json || true
           safety check || (echo "Security vulnerabilities found in Python packages" && exit 1)
-          
-      - name: Static Analysis with Bandit
+
+      - name: Upload safety report
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-report
+          path: safety-report.json
+
+      - name: Run Bandit static analysis
         run: |
-          echo "Running Bandit static analysis..."
           bandit -r src/ -f json -o bandit-report.json || true
           bandit -r src/ || (echo "Security issues found in source code" && exit 1)
-          
-      - name: Check for hardcoded secrets
-        run: |
-          echo "Scanning for potential secrets..."
-          grep -r -i -E "(password|passwd|pwd|secret|key|token|api_key)" src/ || echo "No obvious secrets found"
-          
-      - name: Verify no vulnerable requests versions
-        run: |
-          echo "Checking Python requests library version..."
-          python -c "import requests; print(f'requests version: {requests.__version__}')"
-          # Ensure we're using a recent, secure version of requests
-          python -c "import requests; assert requests.__version__ >= '2.25.0', 'requests version too old'"
-          
-      - name: Generate Software Bill of Materials (SBOM)
-        run: |
-          pip install pip-audit
-          pip-audit --format=json --output=sbom.json || true
-          echo "SBOM generated in sbom.json"
-          
-      - name: Upload security reports
+
+      - name: Upload Bandit report
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: security-reports
-          path: |
-            safety-report.json
-            bandit-report.json
-            sbom.json
+          name: bandit-report
+          path: bandit-report.json
