@@ -1,0 +1,67 @@
+# GitHub Labels Configuration
+# This file defines all labels used in the repository
+# Referenced by: dependabot.yml, release-drafter.yml
+
+# Dependabot labels
+- name: "dependencies"
+  color: "0366d6"
+  description: "Pull requests that update a dependency file"
+
+- name: "security"
+  color: "ee0701"
+  description: "Security-related updates and fixes"
+
+- name: "ci"
+  color: "28a745"
+  description: "Continuous integration and GitHub Actions updates"
+
+# Release drafter and development labels
+- name: "feature"
+  color: "0e8a16"
+  description: "New feature or enhancement"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "Improvements to existing functionality"
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "fix"
+  color: "d93f0b"
+  description: "Bug fixes"
+
+- name: "chore"
+  color: "fef2c0"
+  description: "Maintenance tasks and housekeeping"
+
+- name: "refactor"
+  color: "fbca04"
+  description: "Code refactoring without functional changes"
+
+- name: "docs"
+  color: "0075ca"
+  description: "Documentation updates"
+
+- name: "build"
+  color: "1d76db"
+  description: "Build system and tooling updates"
+
+# Version labels
+- name: "major"
+  color: "b60205"
+  description: "Major version bump (breaking changes)"
+
+- name: "minor"
+  color: "fbca04"
+  description: "Minor version bump (new features)"
+
+- name: "patch"
+  color: "c5def5"
+  description: "Patch version bump (bug fixes)"
+
+# Special labels
+- name: "skip-changelog"
+  color: "d4c5f9"
+  description: "Exclude from changelog"
