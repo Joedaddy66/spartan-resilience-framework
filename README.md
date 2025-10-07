@@ -8,13 +8,88 @@
 
 # Spartan Resilience Framework
 
-A dual-civilization governance model for AI-human coexistence.
+A dual-civilization governance model for AI-human coexistence with integrated FinOps, telemetry, and policy enforcement.
 
 ## Project Structure
-- docs/: MkDocs site content
-- slides/: Presentations (.pptx)
-- src/: Source code / notebooks
-- .github/workflows/: CI automation
+- **apps/**: Application services
+  - **control-plane/**: FinOps policy enforcement and telemetry API
+- **packages/**: Shared packages
+  - **policies/**: OPA Rego policies for FinOps and governance
+  - **telemetry/**: Resource monitoring and unit economics tracking
+- **infra/**: Infrastructure as Code (Docker Compose, database schemas)
+- **docs/**: MkDocs site content
+- **slides/**: Presentations (.pptx)
+- **src/**: Source code / notebooks
+- **.github/workflows/**: CI automation with policy checks
+
+## Features
+
+### FinOps Policy Enforcement
+- Budget guardrails and cost caps
+- Required cost allocation tags
+- Carbon efficiency requirements
+- Promotion gates with quality metrics
+- Integration with Open Policy Agent (OPA)
+
+### Telemetry & Unit Economics
+- Real-time inference and training metrics
+- Calibrated cost models (per-token pricing)
+- Energy consumption and carbon footprint tracking
+- DORA metrics support
+
+### Security & Provenance
+- HMAC-signed event logs for audit trails
+- No hardcoded secrets (environment variable configuration)
+- Automated security scanning in CI
+- Fail-closed policy enforcement
+
+## Quick Start
+
+### Control Plane API
+
+```bash
+# Set up environment
+cd infra
+cp .env.example .env
+# Edit .env with your secrets
+
+# Generate HMAC secret
+python -c 'import secrets; print(secrets.token_hex(32))'
+
+# Start services (PostgreSQL, OPA, Control Plane)
+docker compose up -d
+
+# Check health
+curl http://localhost:8080/health
+```
+
+### Policy Check Example
+
+```bash
+curl -X POST http://localhost:8080/v1/gates/policy-check \
+  -H "Content-Type: application/json" \
+  -d '{
+    "unit_cost_usd": 0.3,
+    "cost_tags": {
+      "team": "ai-team",
+      "environment": "production"
+    },
+    "deployment_region": "us-west-2"
+  }'
+```
+
+### Log Metrics
+
+```bash
+curl -X POST http://localhost:8080/v1/metrics/inference \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "input_tokens": 100,
+    "output_tokens": 50,
+    "duration_ms": 250
+  }'
+```
 
 ## Security
 
@@ -28,20 +103,71 @@ This project implements comprehensive security measures:
 
 See [SECURITY.md](SECURITY.md) for details.
 
-## Installation
+## Development
+
+### Installation
 
 ```bash
+# Install core package
 pip install -e .
+
+# Install control plane dependencies
+pip install flask requests
 ```
 
-## Usage
+### QPPrime Usage
 
 ```bash
-# Command line interface
+# Command line interface for Q_p analysis
 qpprime analyze --p 2 3 5 7
 qpprime factor --p 13 17 19
 qpprime table --p 2 3 5 --markdown
 ```
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run specific test suites
+python -m pytest tests/test_telemetry.py -v
+python -m pytest tests/test_control_plane.py -v
+```
+
+### Policy Development
+
+```bash
+# Validate Rego policies
+opa check packages/policies/finops.rego
+
+# Test policy with input
+echo '{"unit_cost_usd": 0.3, "cost_tags": {"team": "ai", "environment": "dev"}}' > input.json
+opa eval --data packages/policies/finops.rego --input input.json 'data.finops'
+```
+
+## Configuration
+
+All secrets and calibration values are configured via environment variables. See:
+- `infra/.env.example` - Infrastructure configuration
+- `apps/control-plane/README.md` - Control plane configuration
+- `infra/README.md` - Infrastructure documentation
+
+### Required Secrets
+- `SAVE_HMAC_SECRET` - HMAC secret for event signing (required)
+- `POSTGRES_PASSWORD` - Database password
+
+### Cost Calibration
+- `COST_PER_1K_INPUT_TOKENS` - Cost per 1000 input tokens (USD)
+- `COST_PER_1K_OUTPUT_TOKENS` - Cost per 1000 output tokens (USD)
+- `CARBON_INTENSITY_G_PER_KWH` - Grid carbon intensity (g CO2/kWh)
+- `COMPUTE_COST_PER_HOUR` - GPU/compute cost per hour (USD)
+
+## Documentation
+
+- [Control Plane API](apps/control-plane/README.md)
+- [Infrastructure Setup](infra/README.md)
+- [Online Documentation](https://Joedaddy66.github.io/spartan-resilience-framework/)
 
 ## License
 See [LICENSE](LICENSE).

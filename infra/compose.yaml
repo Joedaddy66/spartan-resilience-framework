@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: spartan-postgres
+    environment:
+      # Security: Use secrets from environment or .env file
+      # DO NOT commit actual secrets to Git
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-spartan_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spartan-network
+
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: spartan-opa
+    ports:
+      - "${OPA_PORT:-8181}:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "/policies"
+    volumes:
+      - ../../packages/policies:/policies
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8181/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spartan-network
+
+  control-plane:
+    build:
+      context: ../..
+      dockerfile: apps/control-plane/Dockerfile
+    container_name: spartan-control-plane
+    environment:
+      # Security: Load secrets from environment
+      SAVE_HMAC_SECRET: ${SAVE_HMAC_SECRET}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-spartan_db}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      OPA_URL: http://opa:8181
+      USE_OPA: "true"
+      # Telemetry calibration
+      COST_PER_1K_INPUT_TOKENS: ${COST_PER_1K_INPUT_TOKENS:-0.001}
+      COST_PER_1K_OUTPUT_TOKENS: ${COST_PER_1K_OUTPUT_TOKENS:-0.002}
+      ENERGY_WH_PER_1K_TOKENS: ${ENERGY_WH_PER_1K_TOKENS:-0.5}
+      CARBON_INTENSITY_G_PER_KWH: ${CARBON_INTENSITY_G_PER_KWH:-400}
+      COMPUTE_COST_PER_HOUR: ${COMPUTE_COST_PER_HOUR:-1.00}
+    ports:
+      - "${CONTROL_PLANE_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opa:
+        condition: service_healthy
+    networks:
+      - spartan-network
+
+volumes:
+  postgres_data:
+
+networks:
+  spartan-network:
+    driver: bridge
