@@ -119,7 +119,7 @@ def plot_by_p_mod4(rows, path_png):
         for i in range(len(xp)):
             plt.annotate(f"p={xp[i]}", (xp[i], yd[i]), textcoords="offset points", xytext=(0,10), ha="center")
 
-    plt.title(r"$Q_p$ Digits vs. $p$ grouped by $p \% 4$")
+    plt.title(r"$Q_p$ Digits vs. $p$ grouped by $p \mathrm{\ mod\ } 4$")
     plt.xlabel("Mersenne Exponent ($p$)")
     plt.ylabel("Number of Digits in $Q_p$")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
