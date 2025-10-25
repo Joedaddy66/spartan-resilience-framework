@@ -30,8 +30,8 @@ jobs:
         run: |
           # Install conftest
           wget https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz
-          tar xzf conftest_Linux_x86_64.tar.gz
-          sudo mv conftest /usr/local/bin/
+tar xzf conftest_Linux_x86_64.tar.gz
+sudo mv conftest /usr/local/bin/
           
           # Create test data for policy validation
           echo '{"unit_cost_usd": 0.4, "cost_tags": {"team": "ai", "environment": "dev"}}' > test_input.json
