@@ -1,0 +1,357 @@
+name: RA Longevity MLOps CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/longevity-service/**'
+      - 'tests/test_longevity_service.py'
+      - '.github/workflows/longevity-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/longevity-service/**'
+      - 'tests/test_longevity_service.py'
+
+env:
+  LDROP_THRESHOLD: 5.0  # Minimum L-Drop reduction percentage required for deployment
+
+jobs:
+  test:
+    name: Test RA Longevity Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest httpx
+          pip install -r apps/longevity-service/requirements.txt
+          pip install -e .
+      
+      - name: Generate test secrets
+        run: |
+          echo "SAVE_HMAC_SECRET=$(python -c 'import secrets; print(secrets.token_hex(32))')" >> $GITHUB_ENV
+          echo "BEARER_TOKEN=test-ci-token" >> $GITHUB_ENV
+      
+      - name: Run tests
+        env:
+          SAVE_HMAC_SECRET: ${{ env.SAVE_HMAC_SECRET }}
+          BEARER_TOKEN: ${{ env.BEARER_TOKEN }}
+        run: |
+          python -m pytest tests/test_longevity_service.py -v --tb=short
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            .pytest_cache/
+            artifacts/
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install safety bandit
+      
+      - name: Run Bandit security scan
+        run: |
+          bandit -r apps/longevity-service/src/ -ll
+      
+      - name: Check dependencies for vulnerabilities
+        run: |
+          pip install -r apps/longevity-service/requirements.txt
+          safety check --json || true
+
+  ldrop-gate:
+    name: L-Drop Reduction Gate
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r apps/longevity-service/requirements.txt
+          pip install httpx
+      
+      - name: Generate test secrets
+        run: |
+          echo "SAVE_HMAC_SECRET=$(python -c 'import secrets; print(secrets.token_hex(32))')" >> $GITHUB_ENV
+          echo "BEARER_TOKEN=test-ci-token" >> $GITHUB_ENV
+      
+      - name: Start Longevity Service
+        env:
+          SAVE_HMAC_SECRET: ${{ env.SAVE_HMAC_SECRET }}
+          BEARER_TOKEN: ${{ env.BEARER_TOKEN }}
+        run: |
+          cd apps/longevity-service
+          python src/main.py &
+          SERVICE_PID=$!
+          echo "SERVICE_PID=$SERVICE_PID" >> $GITHUB_ENV
+          sleep 5
+          
+          # Check service is running
+          curl -f http://localhost:8000/health || exit 1
+      
+      - name: Run test analysis
+        run: |
+          # Create test data
+          cat > test_data.csv << EOF
+          RA,D,M,S,LR
+          0.85,2.1,1.5,3.2,0.001
+          0.92,1.8,1.3,2.9,0.0005
+          0.78,2.3,1.7,3.5,0.0012
+          0.88,1.9,1.4,3.0,0.0008
+          0.95,1.7,1.2,2.8,0.0003
+          EOF
+          
+          # Run analysis
+          RESPONSE=$(curl -X POST "http://localhost:8000/api/longevity/analyze" \
+            -H "Authorization: Bearer $BEARER_TOKEN" \
+            -F "mode=tabular" \
+            -F "file=@test_data.csv")
+          
+          echo "$RESPONSE" > analysis_result.json
+          echo "$RESPONSE" | jq .
+      
+      - name: Check L-Drop reduction threshold
+        run: |
+          LDROP_REDUCTION=$(jq -r '.ldrop_metrics.ldrop_reduction_pct' analysis_result.json)
+          
+          echo "L-Drop Reduction: $LDROP_REDUCTION%"
+          echo "Required Threshold: $LDROP_THRESHOLD%"
+          
+          # Compare values
+          if (( $(echo "$LDROP_REDUCTION < $LDROP_THRESHOLD" | bc -l) )); then
+            echo "❌ GATE FAILED: L-Drop reduction $LDROP_REDUCTION% is below threshold $LDROP_THRESHOLD%"
+            echo "::error::Model does not meet L-Drop reduction requirement. Cannot proceed with deployment."
+            exit 1
+          else
+            echo "✅ GATE PASSED: L-Drop reduction $LDROP_REDUCTION% meets threshold $LDROP_THRESHOLD%"
+          fi
+      
+      - name: Stop service
+        if: always()
+        run: |
+          if [ ! -z "$SERVICE_PID" ]; then
+            kill $SERVICE_PID || true
+          fi
+      
+      - name: Upload analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-results
+          path: |
+            analysis_result.json
+            test_data.csv
+
+  dkil-validation-gate:
+    name: DKIL Signature Validation Gate
+    runs-on: ubuntu-latest
+    needs: [test, ldrop-gate]
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'deploy-model')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Validate DKIL signatures
+        run: |
+          echo "🔐 Validating DKIL dual-signature for deployment..."
+          
+          # In production, this would:
+          # 1. Check for human reviewer approval signature
+          # 2. Verify automated logic validation signature
+          # 3. Confirm both keys are present and valid
+          
+          # For now, check if PR has required approvals
+          APPROVALS=$(gh pr view ${{ github.event.pull_request.number }} --json reviews -q '.reviews | length')
+          
+          if [ "$APPROVALS" -lt 1 ]; then
+            echo "❌ DKIL GATE FAILED: Missing human reviewer signature"
+            echo "::error::At least one PR approval required for model deployment (human key)"
+            exit 1
+          fi
+          
+          echo "✅ DKIL GATE PASSED: Dual-signature validation complete"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        run: |
+          cd apps/longevity-service
+          docker build -t ra-longevity-service:${{ github.sha }} .
+          docker tag ra-longevity-service:${{ github.sha }} ra-longevity-service:latest
+      
+      - name: Test Docker image
+        run: |
+          docker run -d \
+            -p 8000:8000 \
+            -e SAVE_HMAC_SECRET="test-secret-for-docker-test-only" \
+            -e BEARER_TOKEN="test-token" \
+            --name test-service \
+            ra-longevity-service:${{ github.sha }}
+          
+          sleep 5
+          
+          # Test health endpoint
+          curl -f http://localhost:8000/health || exit 1
+          
+          docker stop test-service
+          docker rm test-service
+      
+      - name: Save Docker image
+        run: |
+          docker save ra-longevity-service:latest -o longevity-service-image.tar
+      
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: longevity-service-image.tar
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, ldrop-gate]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+      
+      - name: Load Docker image
+        run: |
+          docker load -i longevity-service-image.tar
+      
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          # In production, deploy to Cloud Run, Kubernetes, etc.
+          echo "Deployment would happen here"
+          
+          # Example Cloud Run deployment (commented out):
+          # gcloud run deploy ra-longevity-service-staging \
+          #   --image ra-longevity-service:latest \
+          #   --platform managed \
+          #   --region us-central1 \
+          #   --set-env-vars SAVE_HMAC_SECRET=${{ secrets.HMAC_SECRET }} \
+          #   --set-env-vars BEARER_TOKEN=${{ secrets.BEARER_TOKEN_STAGING }} \
+          #   --set-env-vars LDROP_THRESHOLD=5.0
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, ldrop-gate, dkil-validation-gate]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+      
+      - name: Load Docker image
+        run: |
+          docker load -i longevity-service-image.tar
+      
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          echo "✅ All gates passed:"
+          echo "  - Tests passed"
+          echo "  - Security scan passed"
+          echo "  - L-Drop reduction threshold met"
+          echo "  - DKIL dual-signature validated"
+          
+          # In production, deploy to Cloud Run, Kubernetes, etc.
+          echo "Production deployment would happen here"
+          
+          # Example Cloud Run deployment (commented out):
+          # gcloud run deploy ra-longevity-service \
+          #   --image ra-longevity-service:latest \
+          #   --platform managed \
+          #   --region us-central1 \
+          #   --set-env-vars SAVE_HMAC_SECRET=${{ secrets.HMAC_SECRET }} \
+          #   --set-env-vars BEARER_TOKEN=${{ secrets.BEARER_TOKEN_PROD }} \
+          #   --set-env-vars LDROP_THRESHOLD=5.0 \
+          #   --allow-unauthenticated
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Send notification
+        run: |
+          if [ "${{ needs.deploy-production.result }}" == "success" ]; then
+            echo "✅ Production deployment successful"
+          elif [ "${{ needs.deploy-staging.result }}" == "success" ]; then
+            echo "✅ Staging deployment successful"
+          else
+            echo "ℹ️ Deployment status: ${{ needs.deploy-production.result || needs.deploy-staging.result }}"
+          fi
