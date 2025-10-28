@@ -15,10 +15,11 @@ os.environ['SAVE_HMAC_SECRET'] = 'test-secret-key-for-testing-only-32-chars'
 os.environ['BEARER_TOKEN'] = 'test-token'
 os.environ['ARTIFACTS_DIR'] = tempfile.mkdtemp()
 
-# Add parent directory to path for imports
+# Add apps directory to path for imports
 import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps' / 'longevity-service'))
+_apps_path = Path(__file__).resolve().parents[1] / 'apps' / 'longevity-service'
+if str(_apps_path) not in sys.path:
+    sys.path.insert(0, str(_apps_path))
 
 from src.main import app, calculate_hmac_signature, validate_dkil_signature
 from src.main import DKILSignature

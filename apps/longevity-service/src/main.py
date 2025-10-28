@@ -148,6 +148,35 @@ def generate_run_id() -> str:
     return f"run_{uuid.uuid4().hex[:12]}"
 
 
+def validate_run_id(run_id: str) -> str:
+    """
+    Validate and sanitize run_id to prevent path traversal.
+    
+    Args:
+        run_id: Run identifier to validate
+        
+    Returns:
+        Validated run_id
+        
+    Raises:
+        HTTPException: If run_id is invalid
+    """
+    # Check format: must start with "run_" and contain only alphanumeric characters
+    if not run_id or not run_id.startswith("run_"):
+        raise HTTPException(status_code=400, detail="Invalid run_id format")
+    
+    # Remove prefix and validate remaining characters
+    run_suffix = run_id[4:]
+    if not run_suffix or not run_suffix.isalnum():
+        raise HTTPException(status_code=400, detail="Invalid run_id: must contain only alphanumeric characters")
+    
+    # Check length (our generated IDs are 12 chars after prefix)
+    if len(run_suffix) > 32:
+        raise HTTPException(status_code=400, detail="Invalid run_id: too long")
+    
+    return run_id
+
+
 def calculate_hmac_signature(data: Dict[str, Any]) -> str:
     """Calculate HMAC signature for data integrity."""
     data_json = json.dumps(data, sort_keys=True)
@@ -407,6 +436,9 @@ def validate_dkil_signature(run_id: str, signature: DKILSignature) -> bool:
     Returns:
         True if signature is valid
     """
+    # Validate run_id to prevent path traversal
+    run_id = validate_run_id(run_id)
+    
     # Check if DKIL lock file exists
     lock_path = ARTIFACTS_DIR / run_id / "dkil_lock.json"
     if not lock_path.exists():
@@ -438,6 +470,9 @@ def create_deployment_bundle(run_id: str, model_name: str) -> str:
     Returns:
         Path to created bundle
     """
+    # Validate run_id to prevent path traversal
+    run_id = validate_run_id(run_id)
+    
     run_dir = ARTIFACTS_DIR / run_id
     bundle_path = ARTIFACTS_DIR / f"{model_name}_{run_id}_bundle.zip"
     
@@ -584,6 +619,9 @@ async def get_report(
     
     Returns JSON or HTML report. Checks DKIL lock file if enabled.
     """
+    # Validate run_id to prevent path traversal
+    run_id = validate_run_id(run_id)
+    
     run_dir = ARTIFACTS_DIR / run_id
     
     if not run_dir.exists():
@@ -624,7 +662,8 @@ async def deploy_model(
     Validates DKIL dual signature and uploads model to model registry.
     Requires both human and logic keys in the request.
     """
-    run_id = request.run_id
+    # Validate run_id to prevent path traversal
+    run_id = validate_run_id(request.run_id)
     
     # Validate run exists
     run_dir = ARTIFACTS_DIR / run_id
