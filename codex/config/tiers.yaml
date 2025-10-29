@@ -1,0 +1,14 @@
+tiers:
+  T0:
+    name: Spartans
+    next: T1
+    validators:
+      - schema
+      - content_hash
+      - basic_facts
+  T1:
+    name: Sentinels
+    next: T2
+  T2:
+    name: Council
+    next: END
