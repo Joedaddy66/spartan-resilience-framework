@@ -2,6 +2,8 @@
 import sys
 import pathlib
 
+# Add codex/src to path to allow importing the modules
+# This matches the pattern used in other test files in this repository
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "codex" / "src"))
 
 from models.scroll import Scroll, RoutingHeader, Provenance
@@ -232,8 +234,10 @@ def test_full_graph_flow():
     graph = build_graph()
     state = init_state(initial)
     
-    # Execute enough steps to reach T1 routing
-    for _ in range(4):
+    # Execute 4 steps: Facilitator -> Orchestrator -> T0_Spartan -> Orchestrator
+    # This is enough to complete validation and route to T1
+    STEPS_TO_T1_ROUTING = 4
+    for _ in range(STEPS_TO_T1_ROUTING):
         state = graph.invoke(state)
     
     # Should have ledger entry
