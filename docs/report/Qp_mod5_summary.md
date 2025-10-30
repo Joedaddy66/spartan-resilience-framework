@@ -1,14 +1,22 @@
-# Q_p Summary (generated 2025-08-23T21:45:45.353259+00:00)
+# Q_p Summary (generated 2025-10-25T16:30:17.264938+00:00)
 
-## Plots
+**Charts:**
 
-![Qp Digits Plot](qp_digits_plot.png)
+1. Overall digits growth vs. exponent p
 
-![Survivors vs Killed-by-5](qp_survivors_vs_5.png)
+   ![Qp Digits Plot](qp_digits_plot.png)
 
-![Digits (log scale)](qp_digits_log_plot.png)
+2. Survivors vs. killed-by-5 (different markers)
 
-![Grouped by p mod 4](qp_digits_by_mod4.png)
+   ![Survivors vs Killed-by-5](qp_digits_survivors.png)
+
+3. Log-scale digits vs. p (useful for larger p)
+
+   ![Log-scale Digits](qp_digits_log.png)
+
+4. Grouped by p mod 4 (different markers)
+
+   ![Grouped by p mod 4](qp_by_mod4.png)
 
 ## Detailed Analysis Table
 

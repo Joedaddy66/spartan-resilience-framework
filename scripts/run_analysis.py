@@ -1,6 +1,3 @@
-﻿$ErrorActionPreference = 'Stop'
-
-@'
 import csv, os, datetime, sys, pathlib
 import matplotlib
 matplotlib.use("Agg")  # headless for CI
@@ -122,7 +119,7 @@ def plot_by_p_mod4(rows, path_png):
         for i in range(len(xp)):
             plt.annotate(f"p={xp[i]}", (xp[i], yd[i]), textcoords="offset points", xytext=(0,10), ha="center")
 
-    plt.title("$Q_p$ Digits vs. $p$ grouped by $p \\bmod 4$")
+    plt.title(r"$Q_p$ Digits vs. $p$ grouped by $p \mathrm{\ mod\ } 4$")
     plt.xlabel("Mersenne Exponent ($p$)")
     plt.ylabel("Number of Digits in $Q_p$")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
@@ -148,6 +145,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-'@ | Set-Content -Encoding UTF8 .\scripts\run_analysis.py
-
-Write-Host "✅ Patched run_analysis.py with log-scale and p mod 4 grouped charts."
