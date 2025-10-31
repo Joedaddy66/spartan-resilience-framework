@@ -1,0 +1,71 @@
+name: AWS Drift Sentinel
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/aws-drift-sentinel.yml'
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+  security-events: write
+
+jobs:
+  aws-guardrails-check:
+    name: AWS Guardrails Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          role-session-name: GitHubActions-DriftSentinel
+
+      - name: Install AWS CLI
+        run: |
+          aws --version
+
+      - name: Run AWS Drift Sentinel
+        id: validator
+        continue-on-error: true
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          bash infra/validators/aws-drift-sentinel.sh
+
+      - name: Upload attestation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aws-guardrails-attestation
+          path: |
+            infra/artifacts/aws-guardrails-attestation.json
+            infra/artifacts/aws-guardrails-attestation.md
+            infra/artifacts/aws-guardrails-attestation.csv
+            infra/artifacts/aws-guardrails-attestation.sarif
+          retention-days: 90
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: infra/artifacts/aws-guardrails-attestation.sarif
+          category: aws-policy-drift
+
+      - name: Check validation result
+        if: steps.validator.outcome == 'failure'
+        run: |
+          echo "::error::AWS Drift Sentinel detected policy violations. Check artifacts for details."
+          exit 1

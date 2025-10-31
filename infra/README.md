@@ -94,3 +94,84 @@ Update environment variables in `.env` to match your cloud provider costs:
 - `COMPUTE_COST_PER_HOUR`: GPU/compute instance cost per hour
 
 Refer to your cloud provider documentation for accurate values.
+
+---
+
+## Cloud Governance - Controls Matrix v0.9.1
+
+This infrastructure also supports the **Codex Guardrails Controls Matrix v0.9.1 (Rosetta)** for multi-cloud governance and policy enforcement.
+
+### Components
+
+#### Terraform Modules
+
+- **`modules/github-oidc-aws/`**: AWS IAM role with GitHub OIDC federation (no long-term credentials)
+- **`modules/gcp-org-policies/`**: GCP organization policies for service account key restrictions and storage security
+
+#### Service Control Policies (SCPs)
+
+- **`scp/deny-long-term-creds.json`**: Blocks IAM user access key creation (AWS)
+- **`scp/deny-s3-public.json`**: Blocks S3 public access policies and ACLs
+- **`scp/deny-cloudtrail-stop.json`**: Prevents CloudTrail logging disruption
+
+#### Drift Sentinel Validators
+
+- **`validators/aws-drift-sentinel.sh`**: Validates AWS guardrails (A1, A2, A6, A7, A8)
+- **`validators/azure-drift-sentinel.sh`**: Validates Azure policies (A2, A3, A4, A5, A8)
+- **`validators/gcp-drift-sentinel.sh`**: Validates GCP org policies (A1, A2, A8)
+
+#### GitHub Actions Workflows
+
+- **`.github/workflows/aws-drift-sentinel.yml`**: Daily AWS compliance checks
+- **`.github/workflows/azure-drift-sentinel.yml`**: Daily Azure compliance checks
+- **`.github/workflows/gcp-drift-sentinel.yml`**: Daily GCP compliance checks
+
+### Quick Start - Cloud Guardrails
+
+1. **Deploy OIDC infrastructure** (example for AWS):
+   ```bash
+   cd infra
+   terraform init
+   
+   # Configure AWS OIDC role
+   terraform apply -var="github_repo_subjects=['repo:YourOrg/YourRepo:*']"
+   ```
+
+2. **Configure GitHub repository secrets** (see [CONTROLS_MATRIX.md](../CONTROLS_MATRIX.md) for full list)
+
+3. **Run validators manually**:
+   ```bash
+   # AWS (requires AWS credentials)
+   AWS_ROLE_ARN=arn:aws:iam::123456789:role/github-actions \
+     AWS_REGION=us-east-1 \
+     AWS_ACCOUNT_ID=123456789 \
+     bash validators/aws-drift-sentinel.sh
+   
+   # Azure (requires az login)
+   bash validators/azure-drift-sentinel.sh
+   
+   # GCP (requires gcloud auth)
+   GCP_PROJECT_ID=my-project \
+     GCP_ORG_ID=organizations/123456 \
+     bash validators/gcp-drift-sentinel.sh
+   ```
+
+4. **Review attestation artifacts** in `artifacts/` directory (JSON, SARIF, Markdown, CSV)
+
+### Attestation Artifacts
+
+Validators generate evidence files in multiple formats:
+
+- **JSON**: Machine-readable attestation with control status
+- **SARIF**: Security findings for GitHub Code Scanning
+- **Markdown**: Human-readable reports
+- **CSV**: Spreadsheet-compatible exports for non-compliant resources
+
+### Documentation
+
+See [CONTROLS_MATRIX.md](../CONTROLS_MATRIX.md) for:
+- Complete control coverage matrix
+- CLI verification examples
+- Severity and ownership mappings
+- Implementation guides
+- Roadmap to v1.0.0

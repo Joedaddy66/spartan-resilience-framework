@@ -43,6 +43,14 @@ A dual-civilization governance model for AI-human coexistence with integrated Fi
 - Automated security scanning in CI
 - Fail-closed policy enforcement
 
+### Cloud Governance - Codex Guardrails v0.9.1
+- **Multi-cloud controls matrix** for Azure, AWS, and GCP
+- **OIDC-only authentication** (no long-term credentials)
+- **Drift-sentinel validators** with daily compliance checks
+- **Evidence artifacts** in JSON, SARIF, Markdown, and CSV formats
+- **Service Control Policies** (SCPs) and Organization Policies
+- See [CONTROLS_MATRIX.md](CONTROLS_MATRIX.md) for complete documentation
+
 ## Quick Start
 
 ### Control Plane API
