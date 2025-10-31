@@ -1,0 +1,33 @@
+# CODEOWNERS file
+# This file defines the individuals or teams responsible for code in this repository.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @Joedaddy66
+
+# GitHub configuration and workflows
+/.github/ @Joedaddy66
+
+# Documentation
+/docs/ @Joedaddy66
+/*.md @Joedaddy66
+
+# Source code
+/src/ @Joedaddy66
+
+# Tests
+/tests/ @Joedaddy66
+
+# Security-related files
+/SECURITY.md @Joedaddy66
+/RELEASE-GUARD.md @Joedaddy66
+
+# Build and deployment configuration
+/pyproject.toml @Joedaddy66
+/requirements.txt @Joedaddy66
+/.github/workflows/ @Joedaddy66
+
+# Governance and policy
+/GOVERNANCE.md @Joedaddy66
+/POLICY/ @Joedaddy66
+/HARMONIC_CODEX/ @Joedaddy66
