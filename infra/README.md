@@ -158,6 +158,36 @@ This infrastructure also supports the **Codex Guardrails Controls Matrix v0.9.1 
 
 4. **Review attestation artifacts** in `artifacts/` directory (JSON, SARIF, Markdown, CSV)
 
+### Terraform Offline Validation (Egress Firewall-Safe)
+
+When operating in environments with strict egress firewall rules, Terraform may fail due to:
+- `checkpoint-api.hashicorp.com` - version checks
+- `registry.terraform.io` - provider downloads  
+- `metadata.google.internal` - GCE metadata probes (when unauthenticated)
+
+Use the reusable composite action to validate Terraform offline:
+
+```yaml
+- uses: ./.github/actions/tf-offline-validate
+  with:
+    terraform_version: '1.9.5'
+    working_directory: 'infra'
+    gcp_workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+    gcp_service_account: ${{ secrets.GCP_WIF_SA }}
+    aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+    azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+    azure_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+    azure_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+**How it works:**
+1. Pre-warms provider cache before firewall enforcement
+2. Disables checkpoint calls via `CHECKPOINT_DISABLE=1`
+3. Authenticates to clouds to prevent metadata probes
+4. Validates using cached providers (no network required)
+
+See `.github/actions/tf-offline-validate/README.md` for local CLI equivalents and detailed usage.
+
 ### Attestation Artifacts
 
 Validators generate evidence files in multiple formats:

@@ -223,6 +223,27 @@ gcloud iam workload-identity-pools providers describe github --location=global -
    terraform apply -target=module.gcp_org_policies
    ```
 
+   **Offline/Firewall-Safe Terraform Validation:**
+   
+   If operating in an egress-restricted environment, use the reusable composite action:
+   
+   ```yaml
+   - uses: ./.github/actions/tf-offline-validate
+     with:
+       terraform_version: '1.9.5'
+       working_directory: 'infra'
+       gcp_workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+       gcp_service_account: ${{ secrets.GCP_WIF_SA }}
+   ```
+   
+   This action:
+   - Pre-warms provider cache before firewall enforcement
+   - Disables Terraform checkpoint calls (`CHECKPOINT_DISABLE=1`)
+   - Authenticates to cloud providers to avoid metadata probes
+   - Validates configuration offline using cached providers
+   
+   See `.github/actions/tf-offline-validate/README.md` for details and local CLI equivalents.
+
 4. **Enable workflows**: The drift-sentinel workflows will run automatically on schedule or can be triggered manually.
 
 ### Manual Validation
