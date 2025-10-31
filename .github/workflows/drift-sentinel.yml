@@ -55,7 +55,7 @@ jobs:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('drift_report.txt', 'utf8');
-            const title = `Policy drift detected in ${process.env.GITHUB_REPOSITORY}`;
+            const title = `Policy drift detected in ${context.repo.owner}/${context.repo.repo}`;
             // Find existing open issue
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,

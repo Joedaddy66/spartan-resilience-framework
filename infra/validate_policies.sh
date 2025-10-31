@@ -40,8 +40,8 @@ choose() {
 
 C_KEY_CREATION="$(choose iam.managed.disableServiceAccountKeyCreation iam.disableServiceAccountKeyCreation)"
 C_KEY_UPLOAD="$(choose iam.managed.disableServiceAccountKeyUpload iam.disableServiceAccountKeyUpload)"
-C_API_KEY_CREATION="iam.managed.disableServiceAccountApiKeyCreation"
-C_PREVENT_PRIV_BASIC="iam.managed.preventPrivilegedBasicRolesForDefaultServiceAccounts"
+C_API_KEY_CREATION="$(choose iam.managed.disableServiceAccountApiKeyCreation iam.disableServiceAccountApiKeyCreation)"
+C_PREVENT_PRIV_BASIC="$(choose iam.managed.preventPrivilegedBasicRolesForDefaultServiceAccounts iam.preventPrivilegedBasicRolesForDefaultServiceAccounts)"
 C_AUTO_GRANTS="iam.automaticIamGrantsForDefaultServiceAccounts"
 C_SA_CREATION="$(choose iam.managed.disableServiceAccountCreation iam.disableServiceAccountCreation)"
 

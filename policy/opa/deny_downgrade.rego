@@ -11,7 +11,9 @@ constraints := {
   "constraints/iam.managed.disableServiceAccountKeyUpload",
   "constraints/iam.disableServiceAccountKeyUpload",
   "constraints/iam.managed.disableServiceAccountApiKeyCreation",
+  "constraints/iam.disableServiceAccountApiKeyCreation",
   "constraints/iam.managed.preventPrivilegedBasicRolesForDefaultServiceAccounts",
+  "constraints/iam.preventPrivilegedBasicRolesForDefaultServiceAccounts",
   "constraints/iam.automaticIamGrantsForDefaultServiceAccounts",
   "constraints/iam.managed.disableServiceAccountCreation",
   "constraints/iam.disableServiceAccountCreation",
@@ -29,9 +31,30 @@ denies[msg] {
   pv := r.change.after
   pv.name != null
   constraints[pv.name]
-  # If rules absent or reset=true ⇒ effectively "inherit" (weakening) — block it
-  (not pv.spec.rules[_].enforce) or pv.spec.reset == true
-  msg := sprintf("Weakening org policy %q: rules missing/reset or enforce=false", [pv.name])
+  # Check for reset=true (weakening)
+  pv.spec.reset == true
+  msg := sprintf("Weakening org policy %q: reset=true removes all rules", [pv.name])
+}
+
+denies[msg] {
+  r := resource_changes[_]
+  pv := r.change.after
+  pv.name != null
+  constraints[pv.name]
+  # Check if rules array is empty (weakening)
+  count(pv.spec.rules) == 0
+  msg := sprintf("Weakening org policy %q: no rules defined", [pv.name])
+}
+
+denies[msg] {
+  r := resource_changes[_]
+  pv := r.change.after
+  pv.name != null
+  constraints[pv.name]
+  # Check if any rule has enforce=false (weakening)
+  some i
+  pv.spec.rules[i].enforce == false
+  msg := sprintf("Weakening org policy %q: rule %d has enforce=false", [pv.name, i])
 }
 
 denies[msg] {

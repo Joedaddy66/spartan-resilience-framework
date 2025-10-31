@@ -34,7 +34,7 @@ resource "local_file" "policy_attestation_md" {
     format("- Project: **%s**", var.project_id),
     var.org_id != "" ? format("- Org: **%s**", var.org_id) : "- Org: (none)",
     format("- Managed constraints: **%s**", var.use_managed_constraint),
-    "- Terraform version: **1.9.5+**",
+    "- Terraform version: **>= 1.0**",
     format("- Timestamp (UTC): **%s**", timestamp()),
     format("- CI Commit SHA: **%s**", var.ci_commit_sha != "" ? var.ci_commit_sha : "(local)"),
   ])
