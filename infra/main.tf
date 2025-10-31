@@ -16,11 +16,11 @@ terraform {
 module "github_oidc_runtime" {
   source = "./modules/github_oidc_runtime"
 
-  harden_profile          = var.harden_profile
-  use_managed_constraint  = var.use_managed_constraint
-  project_id              = var.project_id
-  org_id                  = var.org_id
-  policy_scope            = var.policy_scope
+  harden_profile         = var.harden_profile
+  use_managed_constraint = var.use_managed_constraint
+  project_id             = var.project_id
+  org_id                 = var.org_id
+  policy_scope           = var.policy_scope
 }
 
 # Human-readable Markdown attestation
@@ -34,7 +34,7 @@ resource "local_file" "policy_attestation_md" {
     format("- Project: **%s**", var.project_id),
     var.org_id != "" ? format("- Org: **%s**", var.org_id) : "- Org: (none)",
     format("- Managed constraints: **%s**", var.use_managed_constraint),
-    format("- Terraform version: **%s**", terraform.version),
+    "- Terraform version: **1.9.5+**",
     format("- Timestamp (UTC): **%s**", timestamp()),
     format("- CI Commit SHA: **%s**", var.ci_commit_sha != "" ? var.ci_commit_sha : "(local)"),
   ])

@@ -1,8 +1,12 @@
 # Infrastructure
 
+This directory contains both Docker Compose setup for local development and Terraform configuration for GCP IAM policy management.
+
+## Docker Compose Setup
+
 Docker Compose setup for the Spartan Resilience Framework.
 
-## Services
+### Services
 
 - **PostgreSQL**: Metrics and event storage
 - **OPA**: Open Policy Agent for FinOps policy enforcement
@@ -94,3 +98,105 @@ Update environment variables in `.env` to match your cloud provider costs:
 - `COMPUTE_COST_PER_HOUR`: GPU/compute instance cost per hour
 
 Refer to your cloud provider documentation for accurate values.
+
+---
+
+## Terraform: GCP IAM Policy Management
+
+The Terraform configuration in this directory manages GCP IAM organization policies for service account hardening with attestation and validation.
+
+### Features
+
+- **Policy Attestation**: Generates human-readable (Markdown) and machine-readable (JSON) attestations of applied policies
+- **Post-Apply Validation**: Automatically validates that live GCP org policies match the expected configuration
+- **Hardening Profiles**: Choose from `baseline`, `moderate`, or `strict` profiles
+- **CI Integration**: Captures commit SHA and uploads attestations as artifacts
+
+### Quick Start
+
+1. **Set up GCP authentication:**
+```bash
+gcloud auth application-default login
+```
+
+2. **Configure variables:**
+```bash
+cd infra
+terraform init
+
+# Set required variables
+export TF_VAR_project_id="your-gcp-project-id"
+export TF_VAR_org_id="your-org-id"  # Optional
+```
+
+3. **Plan and apply:**
+```bash
+terraform plan
+terraform apply
+```
+
+### Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `attestation_dir` | Directory for attestation artifacts | `artifacts` |
+| `ci_commit_sha` | Git commit SHA (injected by CI) | `""` |
+| `project_id` | GCP Project ID | `""` |
+| `org_id` | GCP Organization ID | `""` |
+| `policy_scope` | Scope: `project` or `org` | `project` |
+| `use_managed_constraint` | Use managed constraints | `true` |
+| `harden_profile` | Profile: `baseline`, `moderate`, or `strict` | `moderate` |
+
+### Hardening Profiles
+
+**Baseline**: Minimal hardening, most policies inherit from parent.
+
+**Moderate** (default):
+- Disable service account key creation and upload
+- Disable API key creation
+- Prevent privileged basic roles on default SAs
+- Turn off automatic grants for default SAs
+
+**Strict**: All moderate policies plus:
+- Disable service account creation entirely
+
+### Validation
+
+The `validate_policies.sh` script compares expected policy modes against live GCP org policies:
+
+```bash
+./validate_policies.sh \
+  --scope project \
+  --project YOUR_PROJECT_ID \
+  --modes-json artifacts/effective-modes.json \
+  --use-managed true
+```
+
+Exit codes:
+- `0`: Success, all policies match
+- `42`: Validation failed, mismatches detected
+- Other: Script error
+
+### CI/CD Integration
+
+See `.github/workflows/terraform.yml` for the main deployment workflow and `.github/workflows/terraform-pr-gate.yml` for PR validation.
+
+**Workflows:**
+- `terraform.yml`: Applies changes on push to main
+- `terraform-pr-gate.yml`: Validates PRs, runs OPA policies to prevent downgrades
+- `drift-sentinel.yml`: Weekly check for policy drift, opens GitHub issues on mismatch
+
+**Artifacts uploaded:**
+- `policy-attestation.md`: Human-readable attestation (retained 365 days)
+- `effective-modes.json`: Machine-readable policy snapshot (retained 365 days)
+
+### Repository Guardrails
+
+This repo includes several safeguards:
+
+1. **CODEOWNERS**: Platform team reviews required for infra changes
+2. **OPA Policy**: Blocks PRs that weaken security constraints
+3. **Drift Detection**: Weekly scheduled job detects manual policy changes
+4. **Branch Protection**: Status checks must pass before merge
+
+See `policy/opa/deny_downgrade.rego` for the OPA policy that prevents security downgrades.

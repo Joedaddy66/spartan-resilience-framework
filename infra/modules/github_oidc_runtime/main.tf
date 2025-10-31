@@ -3,28 +3,28 @@ locals {
   # Profile definitions
   profiles = {
     baseline = {
-      sa_key_creation                  = "inherit"
-      sa_key_upload                    = "inherit"
-      sa_api_key_creation              = "inherit"
-      prevent_privileged_basic_roles   = "inherit"
-      default_sa_auto_grants           = "inherit"
-      sa_creation                      = "inherit"
+      sa_key_creation                = "inherit"
+      sa_key_upload                  = "inherit"
+      sa_api_key_creation            = "inherit"
+      prevent_privileged_basic_roles = "inherit"
+      default_sa_auto_grants         = "inherit"
+      sa_creation                    = "inherit"
     }
     moderate = {
-      sa_key_creation                  = "enforce"
-      sa_key_upload                    = "enforce"
-      sa_api_key_creation              = "enforce"
-      prevent_privileged_basic_roles   = "enforce"
-      default_sa_auto_grants           = "off"
-      sa_creation                      = "inherit"
+      sa_key_creation                = "enforce"
+      sa_key_upload                  = "enforce"
+      sa_api_key_creation            = "enforce"
+      prevent_privileged_basic_roles = "enforce"
+      default_sa_auto_grants         = "off"
+      sa_creation                    = "inherit"
     }
     strict = {
-      sa_key_creation                  = "enforce"
-      sa_key_upload                    = "enforce"
-      sa_api_key_creation              = "enforce"
-      prevent_privileged_basic_roles   = "enforce"
-      default_sa_auto_grants           = "off"
-      sa_creation                      = "enforce"
+      sa_key_creation                = "enforce"
+      sa_key_upload                  = "enforce"
+      sa_api_key_creation            = "enforce"
+      prevent_privileged_basic_roles = "enforce"
+      default_sa_auto_grants         = "off"
+      sa_creation                    = "enforce"
     }
   }
 

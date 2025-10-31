@@ -1,12 +1,12 @@
 variable "attestation_dir" {
-  type    = string
-  default = "artifacts"
+  type        = string
+  default     = "artifacts"
   description = "Directory to store policy attestation artifacts"
 }
 
 variable "ci_commit_sha" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Injected from CI (e.g., $GITHUB_SHA)"
 }
 
