@@ -1,0 +1,86 @@
+name: drift-sentinel
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to Google Cloud via OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Render expected modes (no apply)
+        run: |
+          terraform -chdir=infra init -input=false
+          # Create attestation/modes files without changing cloud:
+          terraform -chdir=infra apply -auto-approve \
+            -target=local_file.policy_effective_modes_json \
+            -target=local_file.policy_attestation_md
+
+      - name: Validate live org policies
+        id: validate
+        run: |
+          set +e
+          bash infra/validate_policies.sh \
+            --scope project \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --modes-json infra/artifacts/effective-modes.json \
+            --use-managed true | tee drift_report.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          exit 0
+
+      - name: Create/Update drift issue
+        if: steps.validate.outputs.exitcode != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('drift_report.txt', 'utf8');
+            const title = `Policy drift detected in ${context.repo.owner}/${context.repo.repo}`;
+            // Find existing open issue
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'policy-drift'
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.number, body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['policy-drift','security','infra']
+              });
+            }
+
+      - name: Attach attestation & report
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-drift-artifacts-${{ github.run_id }}
+          path: |
+            infra/artifacts/policy-attestation.md
+            drift_report.txt
+          retention-days: 90

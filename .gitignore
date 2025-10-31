@@ -21,3 +21,14 @@ docker-compose.override.yml
 # Temporary files
 /tmp/
 *.tmp
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.tfplan
+infra/*.tfstate
+infra/artifacts/
+*.tfvars
+!*.tfvars.example

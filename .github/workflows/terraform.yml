@@ -1,0 +1,66 @@
+name: Terraform
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to Google Cloud via OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform -chdir=infra init
+
+      - name: Terraform Apply
+        run: |
+          terraform -chdir=infra apply -auto-approve \
+            -var="ci_commit_sha=${{ github.sha }}" \
+            -var="attestation_dir=artifacts"
+
+      - name: Upload policy attestation
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-attestation-${{ github.run_id }}
+          path: infra/artifacts/policy-attestation.md
+          if-no-files-found: error
+          retention-days: 365
+
+      - name: Upload effective modes
+        uses: actions/upload-artifact@v4
+        with:
+          name: effective-modes-${{ github.run_id }}
+          path: infra/artifacts/effective-modes.json
+          if-no-files-found: error
+          retention-days: 365
+
+      # Optional belt-and-suspenders: run the validator again in CI
+      - name: Validate live org policies (CI)
+        run: |
+          bash infra/validate_policies.sh \
+            --scope project \
+            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --modes-json infra/artifacts/effective-modes.json \
+            --use-managed true

@@ -1,0 +1,58 @@
+name: terraform-pr-gate
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - "modules/**"
+      - ".github/workflows/**"
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: FMT
+        run: terraform -chdir=infra fmt -check
+
+      - name: Validate
+        run: |
+          terraform -chdir=infra init -input=false
+          terraform -chdir=infra validate
+
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - run: |
+          cd infra
+          tflint --init
+          tflint -f compact
+
+      - name: Plan (json)
+        run: |
+          terraform -chdir=infra plan -input=false -no-color -out=plan.bin
+          terraform -chdir=infra show -no-color -json plan.bin > infra/plan.json
+
+      - name: OPA - deny policy downgrade
+        uses: open-policy-agent/conftest-action@v1
+        with:
+          files: infra/plan.json
+          policy: policy/opa
+
+      - name: PR summary
+        if: always()
+        run: |
+          terraform -chdir=infra apply -auto-approve \
+            -target=local_file.policy_attestation_md \
+            -var="ci_commit_sha=${{ github.sha }}" \
+            -var="attestation_dir=artifacts"
+          echo "## Policy Attestation Preview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat infra/artifacts/policy-attestation.md >> $GITHUB_STEP_SUMMARY
