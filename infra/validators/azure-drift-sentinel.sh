@@ -295,7 +295,9 @@ EOF
 
 # Add non-compliant resources to CSV
 for control in "${RESOURCE_CONTROLS[@]}"; do
-    echo "$control" | jq -r 'select(.status == "non-compliant") | [.account // .vault, .control, .status, .reason // ""] | @csv' >> "${ARTIFACTS_DIR}/azure-noncompliant.csv"
+    RESOURCE_TYPE=$(echo "$control" | jq -r 'if .account then "Storage Account" elif .vault then "Key Vault" else "Unknown" end')
+    RESOURCE_NAME=$(echo "$control" | jq -r '.account // .vault // "N/A"')
+    echo "$control" | jq -r --arg type "$RESOURCE_TYPE" --arg name "$RESOURCE_NAME" 'select(.status == "non-compliant") | [$type, $name, .control, .status, .reason // ""] | @csv' >> "${ARTIFACTS_DIR}/azure-noncompliant.csv"
 done
 
 log_info "Attestation artifacts generated in ${ARTIFACTS_DIR}"

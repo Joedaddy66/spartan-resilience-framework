@@ -75,8 +75,7 @@ log_info "Checking A1: No Long-Term Credentials (SA Key Restrictions)..."
 if [ -n "$ORG_ID" ]; then
     # Check org-level policies
     SA_KEY_CREATION=$(gcloud org-policies describe constraints/iam.disableServiceAccountKeyCreation --organization="$ORG_ID" --format=json 2>/dev/null || echo '{}')
-    SA_KEY_UPLOAD=$(gcloud org-policies describe iam.managed.disableServiceAccountKeyUpload --organization="$ORG_ID" --format=json 2>/dev/null || echo '{}')
-    API_KEY_CREATION=$(gcloud org-policies describe iam.managed.disableServiceAccountApiKeyCreation --organization="$ORG_ID" --format=json 2>/dev/null || echo '{}')
+    SA_KEY_UPLOAD=$(gcloud org-policies describe constraints/iam.disableServiceAccountKeyUpload --organization="$ORG_ID" --format=json 2>/dev/null || echo '{}')
     
     # Check if enforced
     if echo "$SA_KEY_CREATION" | jq -e '.spec.rules[0].enforce == true' &> /dev/null; then
@@ -88,11 +87,11 @@ if [ -n "$ORG_ID" ]; then
     fi
     
     if echo "$SA_KEY_UPLOAD" | jq -e '.spec.rules[0].enforce == true' &> /dev/null; then
-        log_pass "Org policy iam.managed.disableServiceAccountKeyUpload is enforced"
-        ORG_POLICIES+=('{"constraint":"iam.managed.disableServiceAccountKeyUpload","status":"enforced"}')
+        log_pass "Org policy iam.disableServiceAccountKeyUpload is enforced"
+        ORG_POLICIES+=('{"constraint":"iam.disableServiceAccountKeyUpload","status":"enforced"}')
     else
-        log_warning "Org policy iam.managed.disableServiceAccountKeyUpload is not enforced"
-        ORG_POLICIES+=('{"constraint":"iam.managed.disableServiceAccountKeyUpload","status":"not-enforced"}')
+        log_warning "Org policy iam.disableServiceAccountKeyUpload is not enforced"
+        ORG_POLICIES+=('{"constraint":"iam.disableServiceAccountKeyUpload","status":"not-enforced"}')
     fi
 else
     log_info "No organization ID provided, skipping org-level policy checks"
@@ -140,7 +139,7 @@ log_info "Checking A8: Default Service Account Restrictions..."
 DEFAULT_SA="${PROJECT_ID}-compute@developer.gserviceaccount.com"
 SA_BINDINGS=$(gcloud projects get-iam-policy "$PROJECT_ID" --format=json 2>/dev/null || echo '{}')
 
-if echo "$SA_BINDINGS" | jq -e ".bindings[] | select(.members[] | contains(\"serviceAccount:${DEFAULT_SA}\")) | select(.role | contains(\"Editor\") or contains(\"Owner\"))" &> /dev/null; then
+if echo "$SA_BINDINGS" | jq -e ".bindings[] | select(.members[] | contains(\"serviceAccount:${DEFAULT_SA}\")) | select(.role == \"roles/editor\" or .role == \"roles/owner\")" &> /dev/null; then
     log_warning "Default compute service account has Editor or Owner role"
 else
     log_pass "Default compute service account does not have privileged roles"

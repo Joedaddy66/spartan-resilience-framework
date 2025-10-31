@@ -16,9 +16,12 @@ resource "aws_iam_openid_connect_provider" "github" {
     "sts.amazonaws.com"
   ]
 
+  # GitHub OIDC thumbprints as of 2024
+  # Source: https://github.blog/changelog/2022-01-13-github-actions-update-on-oidc-based-deployments-to-aws/
+  # Note: GitHub may rotate these certificates. Verify at: https://token.actions.githubusercontent.com/.well-known/openid-configuration
   thumbprint_list = [
-    "6938fd4d98bab03faadb97b34396831e3780aea1",
-    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+    "6938fd4d98bab03faadb97b34396831e3780aea1",  # Primary thumbprint
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"   # Secondary thumbprint
   ]
 
   tags = merge(

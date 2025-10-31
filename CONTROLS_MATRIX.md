@@ -82,8 +82,8 @@
 * **Key org policies (via module variables):**
 
   * `constraints/iam.disableServiceAccountKeyCreation`
-  * `iam.managed.disableServiceAccountKeyUpload`
-  * `iam.managed.disableServiceAccountApiKeyCreation`
+  * `constraints/iam.disableServiceAccountKeyUpload` (note: newer GCP constraint naming)
+  * *(Note: API key creation restrictions handled via IAM policies)*
   * *(Optional)* Leaf-project SA creation off; default SA privilege guards
 * **WIF/OIDC:** Workload Identity Federation → GitHub OIDC pool + binding to runtime SA
 

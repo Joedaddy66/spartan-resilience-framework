@@ -132,9 +132,10 @@ for bucket in $BUCKETS; do
     fi
     
     # Check for SecureTransport in bucket policy
-    BUCKET_POLICY=$(aws s3api get-bucket-policy --bucket "$bucket" --output text 2>/dev/null || echo "")
-    if [ -n "$BUCKET_POLICY" ]; then
-        if ! echo "$BUCKET_POLICY" | jq -e '.Statement[] | select(.Condition.Bool."aws:SecureTransport" == "false") | select(.Effect == "Deny")' &> /dev/null; then
+    BUCKET_POLICY=$(aws s3api get-bucket-policy --bucket "$bucket" --output json 2>/dev/null || echo "{}")
+    if [ "$BUCKET_POLICY" != "{}" ]; then
+        POLICY_DOC=$(echo "$BUCKET_POLICY" | jq -r '.Policy // "{}"')
+        if ! echo "$POLICY_DOC" | jq -e '.Statement[]? | select(.Condition.Bool."aws:SecureTransport" == "false") | select(.Effect == "Deny")' &> /dev/null; then
             log_info "Bucket ${bucket} may not enforce SecureTransport"
         fi
     fi
