@@ -1,0 +1,67 @@
+name: GCP Drift Sentinel
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/gcp-drift-sentinel.yml'
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+  security-events: write
+
+jobs:
+  gcp-guardrails-check:
+    name: GCP Guardrails Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run GCP Drift Sentinel
+        id: validator
+        continue-on-error: true
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_ORG_ID: ${{ vars.GCP_ORG_ID }}
+        run: |
+          bash infra/validators/gcp-drift-sentinel.sh
+
+      - name: Upload attestation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gcp-org-policy-attestation
+          path: |
+            infra/artifacts/gcp-org-policy-attestation.json
+            infra/artifacts/gcp-org-policy-attestation.sarif
+            infra/artifacts/policy-attestation.md
+          retention-days: 90
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: infra/artifacts/gcp-org-policy-attestation.sarif
+          category: gcp-policy-drift
+
+      - name: Check validation result
+        if: steps.validator.outcome == 'failure'
+        run: |
+          echo "::error::GCP Drift Sentinel detected policy violations. Check artifacts for details."
+          exit 1

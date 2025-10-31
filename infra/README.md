@@ -94,3 +94,114 @@ Update environment variables in `.env` to match your cloud provider costs:
 - `COMPUTE_COST_PER_HOUR`: GPU/compute instance cost per hour
 
 Refer to your cloud provider documentation for accurate values.
+
+---
+
+## Cloud Governance - Controls Matrix v0.9.1
+
+This infrastructure also supports the **Codex Guardrails Controls Matrix v0.9.1 (Rosetta)** for multi-cloud governance and policy enforcement.
+
+### Components
+
+#### Terraform Modules
+
+- **`modules/github-oidc-aws/`**: AWS IAM role with GitHub OIDC federation (no long-term credentials)
+- **`modules/gcp-org-policies/`**: GCP organization policies for service account key restrictions and storage security
+
+#### Service Control Policies (SCPs)
+
+- **`scp/deny-long-term-creds.json`**: Blocks IAM user access key creation (AWS)
+- **`scp/deny-s3-public.json`**: Blocks S3 public access policies and ACLs
+- **`scp/deny-cloudtrail-stop.json`**: Prevents CloudTrail logging disruption
+
+#### Drift Sentinel Validators
+
+- **`validators/aws-drift-sentinel.sh`**: Validates AWS guardrails (A1, A2, A6, A7, A8)
+- **`validators/azure-drift-sentinel.sh`**: Validates Azure policies (A2, A3, A4, A5, A8)
+- **`validators/gcp-drift-sentinel.sh`**: Validates GCP org policies (A1, A2, A8)
+
+#### GitHub Actions Workflows
+
+- **`.github/workflows/aws-drift-sentinel.yml`**: Daily AWS compliance checks
+- **`.github/workflows/azure-drift-sentinel.yml`**: Daily Azure compliance checks
+- **`.github/workflows/gcp-drift-sentinel.yml`**: Daily GCP compliance checks
+
+### Quick Start - Cloud Guardrails
+
+1. **Deploy OIDC infrastructure** (example for AWS):
+   ```bash
+   cd infra
+   terraform init
+   
+   # Configure AWS OIDC role
+   terraform apply -var="github_repo_subjects=['repo:YourOrg/YourRepo:*']"
+   ```
+
+2. **Configure GitHub repository secrets** (see [CONTROLS_MATRIX.md](../CONTROLS_MATRIX.md) for full list)
+
+3. **Run validators manually**:
+   ```bash
+   # AWS (requires AWS credentials)
+   AWS_ROLE_ARN=arn:aws:iam::123456789:role/github-actions \
+     AWS_REGION=us-east-1 \
+     AWS_ACCOUNT_ID=123456789 \
+     bash validators/aws-drift-sentinel.sh
+   
+   # Azure (requires az login)
+   bash validators/azure-drift-sentinel.sh
+   
+   # GCP (requires gcloud auth)
+   GCP_PROJECT_ID=my-project \
+     GCP_ORG_ID=organizations/123456 \
+     bash validators/gcp-drift-sentinel.sh
+   ```
+
+4. **Review attestation artifacts** in `artifacts/` directory (JSON, SARIF, Markdown, CSV)
+
+### Terraform Offline Validation (Egress Firewall-Safe)
+
+When operating in environments with strict egress firewall rules, Terraform may fail due to:
+- `checkpoint-api.hashicorp.com` - version checks
+- `registry.terraform.io` - provider downloads  
+- `metadata.google.internal` - GCE metadata probes (when unauthenticated)
+
+Use the reusable composite action to validate Terraform offline:
+
+```yaml
+- uses: ./.github/actions/tf-offline-validate
+  with:
+    terraform_version: '1.9.5'
+    working_directory: 'infra'
+    gcp_workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+    gcp_service_account: ${{ secrets.GCP_WIF_SA }}
+    aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+    azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+    azure_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+    azure_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+**How it works:**
+1. Pre-warms provider cache before firewall enforcement
+2. Disables checkpoint calls via `CHECKPOINT_DISABLE=1`
+3. Authenticates to clouds to prevent metadata probes
+4. Validates using cached providers (no network required)
+
+See `.github/actions/tf-offline-validate/README.md` for local CLI equivalents and detailed usage.
+
+### Attestation Artifacts
+
+Validators generate evidence files in multiple formats:
+
+- **JSON**: Machine-readable attestation with control status
+- **SARIF**: Security findings for GitHub Code Scanning
+- **Markdown**: Human-readable reports
+- **CSV**: Spreadsheet-compatible exports for non-compliant resources
+
+### Documentation
+
+See [CONTROLS_MATRIX.md](../CONTROLS_MATRIX.md) for:
+- Complete control coverage matrix
+- CLI verification examples
+- Severity and ownership mappings
+- Implementation guides
+- Roadmap to v1.0.0

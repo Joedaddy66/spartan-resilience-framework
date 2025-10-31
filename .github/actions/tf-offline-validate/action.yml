@@ -1,0 +1,121 @@
+name: 'Terraform Offline Validate'
+description: 'Pre-warm Terraform providers and validate configuration offline (egress firewall-safe)'
+author: 'Spartan Resilience Framework'
+
+inputs:
+  terraform_version:
+    description: 'Terraform version to use'
+    required: false
+    default: '1.9.5'
+  working_directory:
+    description: 'Directory containing Terraform configuration'
+    required: false
+    default: 'infra'
+  gcp_workload_identity_provider:
+    description: 'GCP Workload Identity Provider (optional, for GCP authentication)'
+    required: false
+    default: ''
+  gcp_service_account:
+    description: 'GCP Service Account (optional, for GCP authentication)'
+    required: false
+    default: ''
+  aws_role_arn:
+    description: 'AWS IAM Role ARN (optional, for AWS authentication)'
+    required: false
+    default: ''
+  aws_region:
+    description: 'AWS Region (optional, for AWS authentication)'
+    required: false
+    default: 'us-east-1'
+  azure_client_id:
+    description: 'Azure Client ID (optional, for Azure authentication)'
+    required: false
+    default: ''
+  azure_tenant_id:
+    description: 'Azure Tenant ID (optional, for Azure authentication)'
+    required: false
+    default: ''
+  azure_subscription_id:
+    description: 'Azure Subscription ID (optional, for Azure authentication)'
+    required: false
+    default: ''
+
+outputs:
+  validation_result:
+    description: 'Result of terraform validate command'
+    value: ${{ steps.validate.outputs.result }}
+
+runs:
+  using: 'composite'
+  steps:
+    # Install Terraform (pre-firewall)
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+
+    # Authenticate to GCP if credentials provided
+    - name: Authenticate to GCP (optional)
+      if: inputs.gcp_workload_identity_provider != '' && inputs.gcp_service_account != ''
+      id: gcp-auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ inputs.gcp_workload_identity_provider }}
+        service_account: ${{ inputs.gcp_service_account }}
+        token_format: access_token
+
+    # Authenticate to AWS if credentials provided
+    - name: Configure AWS credentials (optional)
+      if: inputs.aws_role_arn != ''
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+        role-session-name: TerraformValidate
+
+    # Authenticate to Azure if credentials provided
+    - name: Azure Login (optional)
+      if: inputs.azure_client_id != '' && inputs.azure_tenant_id != '' && inputs.azure_subscription_id != ''
+      uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.azure_client_id }}
+        tenant-id: ${{ inputs.azure_tenant_id }}
+        subscription-id: ${{ inputs.azure_subscription_id }}
+
+    # Pre-warm provider cache (downloads happen BEFORE firewall)
+    - name: Prefetch Terraform providers
+      shell: bash
+      env:
+        CHECKPOINT_DISABLE: '1'
+        TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tf-cache
+      run: |
+        echo 'plugin_cache_dir = "'"${TF_PLUGIN_CACHE_DIR}"'"' > ~/.terraformrc
+        terraform -chdir=${{ inputs.working_directory }} init -backend=false -upgrade
+
+    # Cache provider plugins for future runs
+    - name: Cache Terraform providers
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.terraform.d/plugin-cache
+          ${{ runner.temp }}/tf-cache
+        key: tf-${{ runner.os }}-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.working_directory)) }}
+
+    # Terraform validate without network (offline mode)
+    - name: Terraform validate (offline)
+      id: validate
+      shell: bash
+      env:
+        CHECKPOINT_DISABLE: '1'
+        TF_IN_AUTOMATION: 'true'
+        TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tf-cache
+        NO_GCE_CHECK: 'true'
+        CLOUDSDK_CORE_CHECK_GCE_METADATA: '0'
+      run: |
+        terraform -chdir=${{ inputs.working_directory }} init -backend=false -get=false
+        terraform -chdir=${{ inputs.working_directory }} validate
+        echo "result=success" >> $GITHUB_OUTPUT
+
+branding:
+  icon: 'shield'
+  color: 'blue'
