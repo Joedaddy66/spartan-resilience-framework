@@ -60,9 +60,24 @@ runs:
         echo "$BODY" > report.json
         echo "✅ Report saved to report.json"
 
-        # Parse and display decision
-        DECISION=$(echo "$BODY" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('decision', 'UNKNOWN'))")
-        DEPTH_INFO=$(echo "$BODY" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('depth_floor_shown', 'N/A'))")
+        # Parse and display decision with error handling
+        DECISION=$(echo "$BODY" | python3 -c "
+        import sys, json
+        try:
+            data = json.load(sys.stdin)
+            print(data.get('decision', 'UNKNOWN'))
+        except:
+            print('UNKNOWN')
+        " 2>/dev/null || echo "UNKNOWN")
+
+        DEPTH_INFO=$(echo "$BODY" | python3 -c "
+        import sys, json
+        try:
+            data = json.load(sys.stdin)
+            print(data.get('depth_floor_shown', 'N/A'))
+        except:
+            print('N/A')
+        " 2>/dev/null || echo "N/A")
 
         echo "decision=${DECISION}" >> $GITHUB_OUTPUT
         echo "report_path=report.json" >> $GITHUB_OUTPUT
@@ -73,12 +88,25 @@ runs:
         echo "═══════════════════════════════════════"
         echo "  Decision: ${DECISION}"
         echo "  ${DEPTH_INFO}"
+        echo "  HTTP Status: ${HTTP_STATUS}"
         echo "═══════════════════════════════════════"
         echo ""
 
-        # Exit with appropriate code
-        if [ "$HTTP_STATUS" != "200" ] || [ "$DECISION" == "FAIL" ]; then
-          echo "❌ Audit failed or endpoint error"
+        # Exit with appropriate code based on HTTP status and decision
+        if [ "$HTTP_STATUS" == "401" ] || [ "$HTTP_STATUS" == "403" ]; then
+          echo "❌ Authentication/authorization failed"
+          exit 1
+        elif [ "$HTTP_STATUS" == "422" ]; then
+          echo "❌ Audit validation failed"
+          exit 1
+        elif [ "$HTTP_STATUS" == "500" ] || [ "$HTTP_STATUS" -ge 500 ]; then
+          echo "❌ Server error"
+          exit 1
+        elif [ "$HTTP_STATUS" != "200" ]; then
+          echo "❌ Unexpected HTTP status: ${HTTP_STATUS}"
+          exit 1
+        elif [ "$DECISION" == "FAIL" ]; then
+          echo "❌ Audit decision: FAIL"
           exit 1
         fi
 
