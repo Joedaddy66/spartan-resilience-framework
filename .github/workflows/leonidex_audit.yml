@@ -1,0 +1,69 @@
+name: LeonideX RSA Audit
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      pubkey_path:
+        description: 'Path to RSA public key file'
+        required: false
+        default: 'keys/sample.pub'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rsa-audit:
+    runs-on: ubuntu-latest
+    name: RSA Key Audit
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine pubkey path
+        id: pubkey
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "path=${{ github.event.inputs.pubkey_path }}" >> $GITHUB_OUTPUT
+          else
+            echo "path=keys/sample.pub" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run RSA Audit
+        id: audit
+        uses: ./github-action
+        with:
+          pubkey_path: ${{ steps.pubkey.outputs.path }}
+          leonidex_endpoint: ${{ secrets.LEONIDEX_ENDPOINT }}
+          leonidex_token: ${{ secrets.LEONIDEX_TOKEN }}
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: leonidex-audit-report
+          path: |
+            report.json
+            report.pdf
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Display audit summary
+        if: always()
+        run: |
+          echo "## RSA Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Decision:** ${{ steps.audit.outputs.decision }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f report.json ]; then
+            echo "**Report:** Available as workflow artifact" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Report Preview" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat report.json | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
