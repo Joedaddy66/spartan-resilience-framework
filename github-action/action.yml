@@ -1,0 +1,89 @@
+name: 'LeonideX RSA Audit'
+description: 'Posts to LeonideX audit endpoint and retrieves sanitized audit result'
+author: 'Spartan Resilience Framework'
+
+inputs:
+  pubkey_path:
+    description: 'Path to RSA public key file'
+    required: false
+    default: 'keys/sample.pub'
+  leonidex_endpoint:
+    description: 'LeonideX audit endpoint URL'
+    required: true
+  leonidex_token:
+    description: 'LeonideX authentication token'
+    required: true
+
+outputs:
+  decision:
+    description: 'Audit decision (PASS/FAIL)'
+    value: ${{ steps.audit.outputs.decision }}
+  report_path:
+    description: 'Path to generated report.json'
+    value: ${{ steps.audit.outputs.report_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run RSA Audit
+      id: audit
+      shell: bash
+      env:
+        LEONIDEX_ENDPOINT: ${{ inputs.leonidex_endpoint }}
+        LEONIDEX_TOKEN: ${{ inputs.leonidex_token }}
+        PUBKEY_PATH: ${{ inputs.pubkey_path }}
+      run: |
+        echo "🔍 Performing RSA audit for: ${PUBKEY_PATH}"
+
+        # Prepare request payload
+        REQUEST_JSON=$(cat <<EOF
+        {
+          "pubkey_path": "${PUBKEY_PATH}",
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        }
+        EOF
+        )
+
+        # POST to audit endpoint
+        echo "📡 Sending audit request to ${LEONIDEX_ENDPOINT}/audit"
+        RESPONSE=$(curl -s -X POST "${LEONIDEX_ENDPOINT}/audit" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${LEONIDEX_TOKEN}" \
+          -d "${REQUEST_JSON}" \
+          -w "\nHTTP_STATUS:%{http_code}")
+
+        # Extract HTTP status code
+        HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+
+        # Write response to report.json
+        echo "$BODY" > report.json
+        echo "✅ Report saved to report.json"
+
+        # Parse and display decision
+        DECISION=$(echo "$BODY" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('decision', 'UNKNOWN'))")
+        DEPTH_INFO=$(echo "$BODY" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('depth_floor_shown', 'N/A'))")
+
+        echo "decision=${DECISION}" >> $GITHUB_OUTPUT
+        echo "report_path=report.json" >> $GITHUB_OUTPUT
+
+        echo ""
+        echo "═══════════════════════════════════════"
+        echo "  RSA AUDIT RESULT"
+        echo "═══════════════════════════════════════"
+        echo "  Decision: ${DECISION}"
+        echo "  ${DEPTH_INFO}"
+        echo "═══════════════════════════════════════"
+        echo ""
+
+        # Exit with appropriate code
+        if [ "$HTTP_STATUS" != "200" ] || [ "$DECISION" == "FAIL" ]; then
+          echo "❌ Audit failed or endpoint error"
+          exit 1
+        fi
+
+        echo "✅ Audit passed successfully"
+
+branding:
+  icon: 'shield'
+  color: 'green'
