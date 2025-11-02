@@ -143,6 +143,12 @@ python -m pytest tests/test_telemetry.py -v
 python -m pytest tests/test_control_plane.py -v
 ```
 
+### Copilot Coding Agent
+
+This repository includes onboarding documentation for an automated Copilot coding agent and contributors in `.github/COPILOT_CODING_AGENT.md` and a minimal config at `.github/copilot-coding-agent.yml`.
+Please follow the testing and review guidance there when opening changes.
+
+
 ### Policy Development
 
 ```bash
