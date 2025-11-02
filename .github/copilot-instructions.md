@@ -25,7 +25,7 @@ The Spartan Resilience Framework is a dual-civilization governance model for AI-
 
 ## Tech Stack
 
-- **Language**: Python 3.9+ (primary: 3.11+)
+- **Language**: Python 3.9+ (minimum), Python 3.11+ (recommended for development)
 - **Package Manager**: pip, setuptools
 - **Web Framework**: Flask (for control-plane API)
 - **Policy Engine**: Open Policy Agent (OPA) with Rego
@@ -155,7 +155,7 @@ All PRs must pass:
 ### Release Process
 - Use Release Drafter for automated release notes
 - Label PRs: `feature`, `bug`, `docs`, `security`
-- PyPI publishing via GitHub Actions on tag
+- PyPI publishing triggered automatically when a release is published on GitHub (typically with `v*` tags like `v0.1.2`)
 - Version in `pyproject.toml` and `src/qpprime/__init__.py`
 
 ## Key Concepts
