@@ -8,10 +8,31 @@
 
 # Spartan Resilience Framework
 
-A dual-civilization governance model for AI-human coexistence with integrated FinOps, telemetry, and policy enforcement.
+A dual-civilization governance model for AI-human coexistence with integrated FinOps, telemetry, and policy enforcement. Now includes **SPEC-1**: A comprehensive blueprint for building AI-powered ChatGPT applications with automated marketing.
+
+## 🆕 SPEC-1: AI App with Auto-Publish & Agent Marketing
+
+**NEW!** Complete specification for building an AI-powered ChatGPT app with ethical automation workers. Perfect for launching on the ChatGPT Apps marketplace with built-in growth engines.
+
+**📚 Quick Links:**
+- [SPEC-1 Summary](SPEC-1-SUMMARY.md) - Quick reference and overview
+- [Complete Specification](docs/SPEC-1-AI-APP-AUTO-PUBLISH.md) - Market evaluation, requirements, strategy
+- [Technical Architecture](docs/SPEC-1-TECHNICAL-ARCHITECTURE.md) - Implementation details, code examples
+- [Quick Start Guide](docs/SPEC-1-QUICK-START.md) - 20-day implementation plan
+
+**What's Included:**
+- 🤖 Native ChatGPT app integration
+- 🌐 Next.js web application shell
+- 🤝 Automation workers (content, scheduling, analytics)
+- 🔐 Enterprise-grade secrets management
+- 💰 Multi-tier monetization strategy
+- ✅ Compliance-first architecture
 
 ## Project Structure
 - **apps/**: Application services
+  - **chatgpt-app/**: ChatGPT-native app configuration (SPEC-1)
+  - **web-shell/**: Next.js web application (SPEC-1)
+  - **workers/**: Automation workers (SPEC-1)
   - **control-plane/**: FinOps policy enforcement and telemetry API
 - **packages/**: Shared packages
   - **policies/**: OPA Rego policies for FinOps and governance
