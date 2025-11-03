@@ -30,10 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           LATEST_VERSION=$(curl -s "https://api.github.com/repos/open-policy-agent/conftest/releases/latest" | grep -oP '"tag_name": "\K(v[0-9\.]+)' || echo '')
-          if [ -z "$LATEST_VERSION" ]; then
-            echo "Failed to fetch latest conftest version from GitHub API"
-            exit 1
-          fi
+          if [ -z "$LATEST_VERSION" ]; then echo "Failed to fetch latest conftest version from GitHub API" && exit 1; fi
           ASSET_URL="https://github.com/open-policy-agent/conftest/releases/download/${LATEST_VERSION}/conftest_${LATEST_VERSION#v}_Linux_x86_64.tar.gz"
           curl -sSL "$ASSET_URL" | tar -xz -C /usr/local/bin
           conftest --version
