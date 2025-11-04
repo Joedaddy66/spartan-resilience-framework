@@ -21,13 +21,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'services', 'payments
 
 def test_idempotency_key_generation():
     """Test that idempotency keys are deterministic."""
-    from app.stripe_client import _idem_key
+    from app.stripe_client import generate_idempotency_key
     
     print("Testing idempotency key generation...")
     
     # Same inputs should produce same key
-    key1 = _idem_key("checkout.session", "order_123", 5000, "usd")
-    key2 = _idem_key("checkout.session", "order_123", 5000, "usd")
+    key1 = generate_idempotency_key("checkout.session", "order_123", 5000, "usd")
+    key2 = generate_idempotency_key("checkout.session", "order_123", 5000, "usd")
     
     assert key1 == key2, "Keys should be deterministic"
     assert len(key1) == 64, "SHA256 hash should be 64 hex characters"
@@ -36,7 +36,7 @@ def test_idempotency_key_generation():
     print(f"✓ Keys match: {key1 == key2}")
     
     # Different inputs should produce different keys
-    key3 = _idem_key("checkout.session", "order_456", 5000, "usd")
+    key3 = generate_idempotency_key("checkout.session", "order_456", 5000, "usd")
     assert key1 != key3, "Different inputs should produce different keys"
     print(f"✓ Different order ID produces different key: {key3}")
     
@@ -110,7 +110,7 @@ def test_security_compliance():
 
 def demonstrate_idempotency_guarantee():
     """Demonstrate the idempotency guarantee."""
-    from app.stripe_client import _idem_key
+    from app.stripe_client import generate_idempotency_key
     
     print("=" * 70)
     print("IDEMPOTENCY GUARANTEE DEMONSTRATION")
@@ -124,15 +124,15 @@ def demonstrate_idempotency_guarantee():
     print("-" * 70)
     
     # First attempt
-    key1 = _idem_key("checkout.session", order_id, amount, currency)
+    key1 = generate_idempotency_key("checkout.session", order_id, amount, currency)
     print(f"Attempt 1 - Idempotency Key: {key1}")
     
     # Retry (e.g., due to network timeout)
-    key2 = _idem_key("checkout.session", order_id, amount, currency)
+    key2 = generate_idempotency_key("checkout.session", order_id, amount, currency)
     print(f"Attempt 2 - Idempotency Key: {key2}")
     
     # Another retry
-    key3 = _idem_key("checkout.session", order_id, amount, currency)
+    key3 = generate_idempotency_key("checkout.session", order_id, amount, currency)
     print(f"Attempt 3 - Idempotency Key: {key3}")
     
     print("-" * 70)

@@ -164,6 +164,27 @@ session2 = create_checkout_session(
 assert session.id == session2.id
 ```
 
+### Generating Custom Idempotency Keys
+
+```python
+from services.payments.app.stripe_client import generate_idempotency_key
+
+# Generate deterministic key for any operation
+key = generate_idempotency_key("payment.refund", "order_123", "5000", "usd")
+
+# Use with any Stripe API call
+refund = stripe.Refund.create(
+    payment_intent="pi_123",
+    amount=5000,
+    idempotency_key=key
+)
+```
+    cancel_url="https://example.com/cancel"
+)
+
+assert session.id == session2.id
+```
+
 ## Security Properties
 
 ### Three-Layer Shield

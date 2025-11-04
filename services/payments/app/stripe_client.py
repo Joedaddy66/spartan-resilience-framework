@@ -3,12 +3,22 @@ import stripe
 
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
-def _idem_key(purpose: str, *parts: str) -> str:
+def generate_idempotency_key(purpose: str, *parts: str) -> str:
+    """
+    Generate a deterministic idempotency key from the given purpose and parts.
+    
+    Args:
+        purpose: The purpose of the operation (e.g., "checkout.session")
+        *parts: Variable parts that uniquely identify this operation
+        
+    Returns:
+        A SHA256 hex digest that can be used as an idempotency key
+    """
     raw = "|".join([purpose, *[str(p) for p in parts]])
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 def create_checkout_session(order_id: str, amount_cents: int, currency: str, success_url: str, cancel_url: str):
-    key = _idem_key("checkout.session", order_id, amount_cents, currency)
+    key = generate_idempotency_key("checkout.session", order_id, amount_cents, currency)
     return stripe.checkout.Session.create(
         mode="payment",
         success_url=success_url,

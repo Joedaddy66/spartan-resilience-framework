@@ -19,7 +19,14 @@ SIG_TOLERANCE_SEC = 300  # 5 minutes
 stripe.api_key = os.environ.get("STRIPE_API_KEY", "")
 
 # --- Clients ---
-_redis = redis.from_url(REDIS_URL, decode_responses=True)
+_redis_client = None
+
+def _get_redis():
+    """Lazy initialization of Redis client."""
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    return _redis_client
 
 def _pg():
     return psycopg2.connect(DATABASE_URL)
@@ -29,10 +36,10 @@ def _payload_hash(raw: bytes) -> str:
 
 def _acquire_lock(event_id: str) -> bool:
     # NX+EX yields a one-shot lock; prevents concurrent double-processing
-    return bool(_redis.set(f"lock:stripe:{event_id}", "1", nx=True, ex=LOCK_TTL_SEC))
+    return bool(_get_redis().set(f"lock:stripe:{event_id}", "1", nx=True, ex=LOCK_TTL_SEC))
 
 def _release_lock(event_id: str) -> None:
-    _redis.delete(f"lock:stripe:{event_id}")
+    _get_redis().delete(f"lock:stripe:{event_id}")
 
 @router.post("/webhooks/stripe")
 async def stripe_webhook(request: Request) -> Response:
