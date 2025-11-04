@@ -1,5 +1,8 @@
-import random, math
+import random, math, secrets
 from typing import Dict, List, Tuple
+
+# Use secrets.SystemRandom for cryptographically secure random number generation
+_secure_random = secrets.SystemRandom()
 
 def mersenne(p: int) -> int:
     return (1 << p) - 1
@@ -30,7 +33,7 @@ def is_probable_prime(n: int, k: int = 16) -> bool:
         r += 1
         d //= 2
     for _ in range(k):
-        a = random.randrange(2, n - 1)
+        a = _secure_random.randrange(2, n - 1)
         x = pow(a, d, n)
         if x == 1 or x == n - 1:
             continue
@@ -58,9 +61,9 @@ def pollards_rho(n: int) -> int:
     if n % 3 == 0:
         return 3
     for _ in range(6):
-        x = random.randrange(2, n-1)
+        x = _secure_random.randrange(2, n-1)
         y = x
-        c = random.randrange(1, n-1)
+        c = _secure_random.randrange(1, n-1)
         d = 1
         while d == 1:
             x = (x*x + c) % n
