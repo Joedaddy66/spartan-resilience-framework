@@ -26,20 +26,15 @@ jobs:
           echo "Validating policy syntax..."
           opa check packages/policies/finops.rego
           
-      - name: Install conftest
-        run: |
-          set -euo pipefail
-          ASSET_URL="https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz"
-          if curl --head --silent --fail "$ASSET_URL" >/dev/null; then
-            echo "Using conftest latest release asset"
-          else
-            echo "Latest asset not found; falling back to v0.52.0"
-            ASSET_URL="https://github.com/open-policy-agent/conftest/releases/download/v0.52.0/conftest_Linux_x86_64.tar.gz"
-          fi
-          curl -fsSL -o conftest.tar.gz "$ASSET_URL"
-          tar -xzf conftest.tar.gz
-          sudo mv conftest /usr/local/bin/
-          conftest --version
+     name: Install conftest
+  run: |
+    set -euo pipefail
+    VERSION="v0.52.0"
+    ASSET_URL="https://github.com/open-policy-agent/conftest/releases/download/${VERSION}/conftest_Linux_x86_64.tar.gz"
+    curl -fsSL -o conftest.tar.gz "$ASSET_URL"
+    tar -xzf conftest.tar.gz
+    sudo mv conftest /usr/local/bin/
+    conftest --version
           
       - name: Run policy checks with conftest
         run: |
