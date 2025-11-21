@@ -4,7 +4,7 @@ The Accord represents the **foundational agreement** for resilience.
 
 It establishes shared principles across technology, governance, and culture:
 
-1. **Truth as a Web** – Truth is plural and multi-faceted.
-2. **Resilience First** – Systems must endure disruption.
-3. **Human Dignity** – AI must preserve autonomy and rights.
-4. **Shared Stewardship** – Responsibility belongs to many, not few.
+1. **Truth as a Web** Â– Truth is plural and multi-faceted.
+2. **Resilience First** Â– Systems must endure disruption.
+3. **Human Dignity** Â– AI must preserve autonomy and rights.
+4. **Shared Stewardship** Â– Responsibility belongs to many, not few.
