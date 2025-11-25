@@ -238,4 +238,7 @@ No formulas, dataset rows, or internal metrics are exposed.
 - [Online Documentation](https://Joedaddy66.github.io/spartan-resilience-framework/)
 
 ## License
-See [LICENSE](LICENSE).
+
+This project is licensed under the terms of the **Apache License 2.0**. See the [LICENSE](LICENSE) file for the full legal text.
+
+Our core design philosophy and technical commitments are outlined in [PRINCIPLES.md](PRINCIPLES.md).
