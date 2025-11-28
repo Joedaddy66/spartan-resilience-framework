@@ -2,3 +2,48 @@ site_name: Spartan Resilience Framework
 site_url: https://joedaddy66.github.io/spartan-resilience-framework/
 theme:
   name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Core Framework:
+      - The Accord: accord.md
+      - Laws: laws.md
+      - Training Protocol: training.md
+      - Roadmap: roadmap.md
+  - AI App Platform (SPEC-1):
+      - Overview: SPEC-1-AI-APP-AUTO-PUBLISH.md
+      - Technical Architecture: SPEC-1-TECHNICAL-ARCHITECTURE.md
+      - Quick Start Guide: SPEC-1-QUICK-START.md
+  - Integration:
+      - FinOps Integration: FINOPS_INTEGRATION.md
+  - Mathematical Foundation:
+      - Qp mod 5 Note: Qp_mod5_note.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
+  - toc:
+      permalink: true
