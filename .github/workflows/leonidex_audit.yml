@@ -42,7 +42,7 @@ jobs:
           leonidex_token: ${{ secrets.LEONIDEX_TOKEN }}
 
       - name: Upload report artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: leonidex-audit-report
