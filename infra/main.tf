@@ -63,7 +63,7 @@ resource "null_resource" "validate_policies" {
       "bash ${path.module}/validate_policies.sh",
       "--scope ${var.policy_scope}",
       "--project ${var.project_id}",
-      "--org ${var.org_id}",
+      var.org_id != "" ? "--org ${var.org_id}" : "",
       "--modes-json ${var.attestation_dir}/effective-modes.json",
       "--use-managed ${var.use_managed_constraint}"
     ])
