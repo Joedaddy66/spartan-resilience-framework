@@ -40,11 +40,16 @@ jobs:
         id: validate
         run: |
           set +e
+          # Extract policy_scope and use_managed_constraint from terraform.tfvars (or set defaults)
+          POLICY_SCOPE=$(grep -E '^policy_scope *= *' infra/terraform.tfvars | sed -E "s/.*= *['\"]?([^'\"]*)['\"]?/\1/" | tr -d '\n')
+          if [ -z "$POLICY_SCOPE" ]; then POLICY_SCOPE="project"; fi
+          USE_MANAGED=$(grep -E '^use_managed_constraint *= *' infra/terraform.tfvars | sed -E "s/.*= *([a-zA-Z]*)/\1/" | tr '[:upper:]' '[:lower:]' | tr -d '\n')
+          if [ -z "$USE_MANAGED" ]; then USE_MANAGED="true"; fi
           bash infra/validate_policies.sh \
-            --scope project \
+            --scope "$POLICY_SCOPE" \
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --modes-json infra/artifacts/effective-modes.json \
-            --use-managed true | tee drift_report.txt
+            --use-managed "$USE_MANAGED" | tee drift_report.txt
           echo "exitcode=$?" >> $GITHUB_OUTPUT
           exit 0
 
