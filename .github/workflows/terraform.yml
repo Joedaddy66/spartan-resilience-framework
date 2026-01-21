@@ -38,7 +38,12 @@ jobs:
         run: |
           terraform -chdir=infra apply -auto-approve \
             -var="ci_commit_sha=${{ github.sha }}" \
-            -var="attestation_dir=artifacts"
+            -var="attestation_dir=artifacts" \
+            -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
+            -var="org_id=${{ vars.GCP_ORG_ID }}" \
+            -var="policy_scope=${{ vars.POLICY_SCOPE }}" \
+            -var="use_managed_constraint=${{ vars.USE_MANAGED_CONSTRAINT }}" \
+            -var="harden_profile=${{ vars.HARDEN_PROFILE }}"
 
       - name: Upload policy attestation
         uses: actions/upload-artifact@v4
