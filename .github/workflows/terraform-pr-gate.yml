@@ -37,7 +37,9 @@ jobs:
 
       - name: Plan (json)
         run: |
-          terraform -chdir=infra plan -input=false -no-color -out=plan.bin
+          terraform -chdir=infra plan -input=false -no-color -out=plan.bin \
+            -var="ci_commit_sha=${{ github.sha }}" \
+            -var="attestation_dir=artifacts"
           terraform -chdir=infra show -no-color -json plan.bin > infra/plan.json
 
       - name: OPA - deny policy downgrade
