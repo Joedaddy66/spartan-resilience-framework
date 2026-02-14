@@ -1,6 +1,6 @@
 # AI Training: A New Philosophy
 
-The **Blank-State AI Training Protocol** builds AI like a growing mind — not a static machine.
+The **Blank-State AI Training Protocol** builds AI like a growing mind Â— not a static machine.
 
 ---
 
